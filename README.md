@@ -13,6 +13,8 @@ Snow Day makes it snow on your Mac. Flakes drift across your desktop, settle on 
 
 In **Christmas Mode**, a snowy alpine village beneath the Matterhorn appears behind your windows – with an Advent calendar of 24 doors that each open only on their day in December.
 
+Christmas Mode is optional: without it, Snow Day keeps **your own desktop picture** and simply lets it snow on top.
+
 Your windows always stay clear: the snow and the village live only on the visible desktop, and clicks pass straight through.
 
 <p align="center">
@@ -44,6 +46,16 @@ Your windows always stay clear: the snow and the village live only on the visibl
 - Click a snowball to pick it up and stack it: three snowballs make a snowman, each with its own hat, face and personality.
 - With two snowmen on the same screen, start a snowball fight from the menu. The last one standing gets a crown.
 
+### Your own wallpaper
+Snow Day doesn't replace your desktop picture. With **Christmas Mode** off, you keep your own wallpaper and get everything else on top of it: falling snow, snow on your windows, snowmen, snowball fights, the snowplow and frost on notifications.
+
+You can also keep Christmas Mode on and just turn off **Winter Village with Advent Calendar** – then your own wallpaper stays and you still get the Christmas touches like the festive pointers.
+
+<p align="center">
+  <img src="docs/images/own-wallpaper.jpg" alt="Snow falling over a blue desktop wallpaper, with snow on a window, two snowmen and the snowplow" width="49%">
+  <img src="docs/images/own-wallpaper-warm.jpg" alt="Snow falling over a warm pink desktop wallpaper, with snow on a window, two snowmen and the snowplow" width="49%">
+</p>
+
 ### Alpine village with Advent calendar
 - A high valley with the Matterhorn, chalets, a church, a cable car, a ski run and a frozen lake. The sky follows your Mac's clock: sun, alpenglow, moon and stars.
 - **24 doors** are hidden around the village. Each one opens only on its day in December and immediately brings something new to the village: a horse-drawn sleigh, lanterns, fairy lights, the village tree, the cable car, a mulled wine stall, a children's choir, the northern lights – and on the 24th the whole valley lights up.
@@ -72,8 +84,8 @@ Everything is in the snowman menu at the top right:
 | Snowfall | Light, Normal or Heavy |
 | Snowplow | Turns the snowplow on or off |
 | Frost on Notifications | Frost on macOS notifications |
-| Christmas Mode | Village, Advent calendar, visitors and Christmas pointers |
-| Winter Village with Advent Calendar | Shows or hides the village in Christmas Mode |
+| Christmas Mode | Village, Advent calendar, visitors and Christmas pointers – off keeps your own wallpaper |
+| Winter Village with Advent Calendar | Shows or hides the village in Christmas Mode; off keeps your own wallpaper |
 | Christmas Pointer | Candy Cane, Peppermint or Standard Pointer |
 | Start Snowball Fight | Available once two snowmen are finished |
 | Remove Snowmen / Sweep Away Snow | Resets everything |
