@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Schneetag</string>
+	<key>CFBundleExecutable</key>
+	<string>Schneetag</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>local.schneetag.mac</string>
+	<key>CFBundleName</key>
+	<string>Schneetag</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>2.85</string>
+	<key>CFBundleVersion</key>
+	<string>187</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>Open Source unter der MIT-Lizenz</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+</dict>
+</plist>
