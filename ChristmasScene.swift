@@ -31,8 +31,7 @@ final class ChristmasScene {
         var climb: CGFloat = 0
     }
 
-    /// Ten minutes between visits. The sleigh is a rare event, not a parade;
-    /// „Weihnachtsbesuch zeigen" im Menü holt den nächsten sofort.
+    /// Ten minutes between visits. The sleigh is a rare event, not a parade.
     private static let visitInterval: CGFloat = 600
     private static let visitSpread: CGFloat = 90
 

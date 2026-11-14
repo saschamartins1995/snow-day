@@ -42,31 +42,31 @@ enum AdventGift: Equatable {
 
     var title: String {
         switch self {
-        case .warmth: "Im Dorf wird es heller"
-        case .horseSleigh: "Der Pferdeschlitten fährt durchs Dorf"
-        case .tractor: "Der Bauer bringt die Christbäume"
-        case .lanterns: "Alle Laternen im Dorf brennen"
-        case .sledgeChild: "Die Kinder holen die Schlitten raus"
-        case .smoke: "In allen Öfen brennt das Feuer"
-        case .rudolph: "Rudolph fliegt übers Tal"
-        case .garland: "Lichterketten an allen Laternen"
-        case .bells: "Die Kirchenglocken läuten"
-        case .pond: "Der Dorfteich ist zugefroren"
-        case .starsInWindows: "Sterne in allen Fenstern"
-        case .tree: "Der Dorfbaum leuchtet"
-        case .snowmanFamily: "Eine Schneemann-Familie im Feld"
-        case .cableCar: "Die Gondeln sind geschmückt"
-        case .market: "Der Glühweinstand hat geöffnet"
-        case .star: "Ein Stern über der Kirche"
-        case .crib: "Die Krippe vor der Kirche"
-        case .flurry: "Ein Schneeschauer zieht durch"
-        case .balloon: "Ein Heißluftballon über dem Tal"
-        case .choir: "Der Kinderchor singt"
-        case .torchRun: "Fackelzug auf der Piste"
-        case .aurora: "Polarlicht über dem Tal, sobald es dunkel wird"
-        case .bonfire: "Ein Lagerfeuer im Feld"
-        case .sleigh: "Der Weihnachtsmann kommt vorbei"
-        case .finale: "Das ganze Dorf im Licht"
+        case .warmth: "The village grows brighter"
+        case .horseSleigh: "The horse-drawn sleigh rides through the village"
+        case .tractor: "The farmer brings the Christmas trees"
+        case .lanterns: "Every lantern in the village is lit"
+        case .sledgeChild: "The children bring out their sledges"
+        case .smoke: "A fire burns in every stove"
+        case .rudolph: "Rudolph flies over the valley"
+        case .garland: "Fairy lights on every lantern"
+        case .bells: "The church bells are ringing"
+        case .pond: "The village pond has frozen over"
+        case .starsInWindows: "Stars in every window"
+        case .tree: "The village tree lights up"
+        case .snowmanFamily: "A snowman family in the field"
+        case .cableCar: "The cable cars are decorated"
+        case .market: "The mulled wine stall is open"
+        case .star: "A star above the church"
+        case .crib: "The nativity scene by the church"
+        case .flurry: "A snow flurry sweeps through"
+        case .balloon: "A hot-air balloon over the valley"
+        case .choir: "The children's choir sings"
+        case .torchRun: "A torchlight procession on the slope"
+        case .aurora: "Northern lights over the valley once it gets dark"
+        case .bonfire: "A bonfire in the field"
+        case .sleigh: "Santa drops by"
+        case .finale: "The whole village aglow"
         }
     }
 }
@@ -95,8 +95,8 @@ struct AdventSeason: Equatable {
 
     func status(for day: Int) -> String {
         if opened.contains(day) { return AdventGift.forDay(day).title }
-        if today == day || anyDay { return "Heute öffnen" }
-        return "Öffnet am \(day). Dezember"
+        if today == day || anyDay { return "Open today" }
+        return "Opens on December \(day)"
     }
 }
 
@@ -620,7 +620,7 @@ static func covers(_ house: Chalet, _ area: CGRect) -> Bool {
                                          roof: size * 0.42, depth: depth, day: nil, kind: .barn))
         }
 
-        // Häuser an derselben Straße dürfen sich nicht überlappen.
+        // Houses on the same road must never overlap.
         for depth in 0..<3 {
             var indices = layout.chalets.indices.filter { layout.chalets[$0].depth == depth }
             indices.sort { layout.chalets[$0].base.minX < layout.chalets[$1].base.minX }

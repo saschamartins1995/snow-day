@@ -35,7 +35,7 @@ snow.heavyPlow.enabled = false
     }
     let average = CGFloat(columns.reduce(0, +)) / CGFloat(columns.count)
     precondition(columns.allSatisfy { CGFloat($0) >= average * 0.87 }, "Snowfall distribution: \(columns)")
-    print("Seitenwind: \(columns), \(evaluated) Stichproben, beide Richtungen")
+    print("Crosswind: \(columns), \(evaluated) samples, both directions")
 }
 
 func checkPlowFlow() {
@@ -49,7 +49,7 @@ snow.heavyPlow.enabled = false
     for _ in 0..<118 {
         snow.step(1 / 60)
         precondition(snow.plowLoad <= plowLoadLimit)
-        precondition(snow.flakes.isEmpty,"Kleiner Pflug darf keine Rückkopplung durch Auswurf vor der Schaufel erzeugen")
+        precondition(snow.flakes.isEmpty,"Small snowplow must not create feedback from snow thrown out in front of the blade")
         precondition(snow.ground.max()! <= 11)
     }
     precondition(snow.plowLoad > 5 && snow.ground.reduce(0,+) >= 318)
@@ -58,7 +58,7 @@ snow.heavyPlow.enabled = false
     snow.plowEnabled = false
     for _ in 0..<55 { snow.step(1 / 60) }
     precondition(snow.flakes.isEmpty && abs(snow.ground.reduce(0, +) - 330) < 0.0001, "Unload \(snow.flakes.count), ground \(snow.ground.reduce(0, +))")
-    print("Kleiner Pflug: begrenzte Ladung, kein wieder eingesammelter Auswurf, Masse beim Ausschalten erhalten")
+    print("Small snowplow: limited load, no re-collected discharge, mass conserved when switched off")
 }
 
 func checkWedgePaint() throws {
@@ -83,7 +83,7 @@ snow.heavyPlow.enabled = false
     }
     precondition(hasPaint, "Moving snow must remain visible between its origin and its destination")
     try bitmap.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: testOutput + "/wedge.png"))
-    print("Zeigerschub: Schneewulst ist sichtbar, bevor er sein Ziel erreicht")
+    print("Pointer push: snow ridge is visible before it reaches its destination")
 }
 
 checkWind()
@@ -114,7 +114,7 @@ view.heavyPlow.enabled = false
     precondition(crossedRim && fellOutside)
     let mass = view.ledges[1]!.snow.reduce(0,+) + view.ground.reduce(0,+) + view.flakes.reduce(0, { $0 + $1.looseSnow })
     precondition(abs(mass-8) < 0.0001)
-    print("Schneller Schub: kontinuierlicher Weg, Rundung, Fall außerhalb des Fensters, Masse erhalten")
+    print("Fast push: continuous path, rounded corner, falling outside the window, mass conserved")
 }
 checkEdgeTravel()
 func checkFrameTiming() {
@@ -149,7 +149,7 @@ view.heavyPlow.enabled = false
         ground.enumerated().reduce(0.0) { $0 + (CGFloat($1.offset)+0.5)*8*$1.element } / ground.reduce(0,+)
     }
     precondition(centers.max()! - centers.min()! < 2, "Unstable cursor contact: \(centers)")
-    print("30/60/120 und ungleichmäßige Bildraten: Schwerpunkte \(centers)")
+    print("30/60/120 and uneven frame rates: centers of mass \(centers)")
 }
 checkFrameTiming()
 func scenario0() throws {
@@ -181,9 +181,9 @@ precondition(snow.ground[22] < 2 && snow.ground[24] > 0 && snow.ground[25] > 0)
 precondition(abs(snow.ground.reduce(0, +) - 2) < 0.0001)
 snow.syncWindows([(1, sill)])
 snow.ledges[1]!.snow[4] = 8
-// Hier geht es um den Schnee auf der Fensterkante: der Weihnachtsmodus darf ihn
-// nicht verändern. Das Winterdorf ist eine eigene, gewollte Ebene und wird für
-// diesen Vergleich abgeschaltet; es hat eigene Prüfungen.
+// This is about the snow on the window edge: Christmas mode must not change it.
+// The winter village is a separate, intentional layer and is switched off for
+// this comparison; it has its own checks.
 snow.villageEnabled = false
 func shot(_ festive: Bool) -> Data {
     snow.christmas = festive
@@ -192,7 +192,7 @@ func shot(_ festive: Bool) -> Data {
     return rep.representation(using: .png, properties: [:])!
 }
 precondition(shot(false) == shot(true))
-print("Pulver gebündelt, Schneemenge erhalten, langsamer Zeigerschub und keine Lichter auf der Fensterkante geprüft")
+print("Checked: powder bundled, snow amount conserved, slow pointer push and no lights on the window edge")
 
 }
 FileHandle.standardError.write(Data("v124-bursts.swift\n".utf8))
@@ -243,7 +243,7 @@ smoothing.plowEnabled = true
 smoothing.ground[25] = 12
 smoothing.step(1 / 60)
 precondition(smoothing.ground[24] > 0 && smoothing.ground[25] < 12,
-             "Auch an der vollen Schaufel muss ein hoher Haufen seitlich absinken können")
+             "Even at a full blade, a tall pile must be able to slump sideways")
 precondition(abs(smoothing.ground.reduce(0,+)+smoothing.plowLoad-12)<0.0001)
 
 func bitmap(_ cursor: NSCursor) -> NSBitmapImageRep {
@@ -272,14 +272,14 @@ let plainMarks = [NSCursor.arrow, .openHand, .closedHand, .iBeam, .pointingHand]
 let festiveMarks = [FestiveCursorArt.arrow, FestiveCursorArt.openHand, FestiveCursorArt.closedHand,
                     FestiveCursorArt.candy[0]].map(FestivePointerKeeper.mark)
 precondition(Set(plainMarks).count == plainMarks.count && Set(festiveMarks).count == festiveMarks.count)
-precondition(Set(plainMarks).isDisjoint(with: festiveMarks), "Weihnachtszeiger und Systemzeiger müssen unterscheidbar sein")
+precondition(Set(plainMarks).isDisjoint(with: festiveMarks), "Christmas pointer and system pointer must be distinguishable")
 precondition(FestivePointerKeeper.mark(NSCursor.arrow) == FestivePointerKeeper.mark(NSCursor.arrow))
 FestiveCursorArt.style = .plain
 precondition(FestiveCursorArt.pointer == nil && FestiveCursorArt.open(true) === NSCursor.openHand)
 FestiveCursorArt.style = .peppermint
 precondition(FestiveCursorArt.pointer === FestiveCursorArt.candy[0])
 FestiveCursorArt.style = .candyCane
-print("Drei Tiefen, Fenstermaske, 20 Prozent, geglätteter Boden, Originalkontur und animierter Ladeball geprüft")
+print("Checked: three depths, window mask, 20 percent, smoothed ground, original outline and animated loading ball")
 
 }
 FileHandle.standardError.write(Data("v124-depth-ground-cursors.swift\n".utf8))
@@ -338,7 +338,7 @@ precondition(dismissed == 1 && snow.flakes.contains(where: { $0.frostShard }))
 precondition(snow.flakes.allSatisfy { $0.x > banner.frame.minX && $0.y > 460 })
 for _ in 0..<110 { snow.step(1 / 60) }
 precondition(snow.flakes.isEmpty && snow.ground.reduce(0, +) > 0.2)
-print("Zeigerschub, Wulst und rückwärtiger Abwurf, Fensterabtastung und Frost nach Schließen geprüft")
+print("Checked: pointer push, ridge and backward dumping, window sampling and frost after closing")
 
 }
 FileHandle.standardError.write(Data("v124-frost-push.swift\n".utf8))
@@ -397,7 +397,7 @@ let ledge = hour.ledges[1]!.snow
 let ledgeMean = ledge.reduce(0, +) / CGFloat(ledge.count)
 let groundMean = hour.ground.reduce(0, +) / CGFloat(hour.ground.count)
 precondition(ledgeMean < 5 && groundMean < 6)
-print(String(format: "Nach 60 s bei Normal, Pflug aus: Fensterkante Ø %.1f pt, Boden Ø %.1f pt", ledgeMean, groundMean))
+print(String(format: "After 60 s at Normal, snowplow off: window edge avg %.1f pt, ground avg %.1f pt", ledgeMean, groundMean))
 let bannerFrame = CGRect(x: 454, y: 378, width: 330, height: 88)
 precondition(FrostBanner.fits(bannerFrame, on: screen))
 precondition(!FrostBanner.fits(CGRect(x: 454, y: 100, width: 330, height: 380), on: screen))
@@ -416,7 +416,7 @@ controller.update([fixture], at: 6, makePanel: makeFrostPanel)
 precondition(created.count == 1 && (created[0].contentView as! FrostView).growth > 0.8)
 controller.update([], at: 7, makePanel: makeFrostPanel)
 precondition(!created[0].isVisible)
-print("Zeigerspitze, Impuls, Fensterrutschen, Überlauf und Frostfenster geprüft")
+print("Checked: pointer tip, momentum, sliding off windows, overflow and frost window")
 
 }
 FileHandle.standardError.write(Data("v124-physics.swift\n".utf8))
@@ -484,7 +484,7 @@ for step in 1...10 { ledge.step(1 / 60, cursor: CGPoint(x: 181 - 38 * CGFloat(st
 for _ in 0..<12 { ledge.step(1 / 60) }
 precondition(abs(ledge.ledges[1]!.snow.reduce(0, +) - 5) < 0.001)
 precondition(ledge.ledges[1]!.snow[..<4].reduce(0, +) > 3 && ledge.flakes.isEmpty)
-print("Retina-Kanten und Radstand, Schnee vor dem Zeiger, Reichweite der Zeigerform und Fensterkante geprüft")
+print("Checked: Retina edges and wheelbase, snow in front of the pointer, reach of the pointer shape and window edge")
 
 }
 FileHandle.standardError.write(Data("v124-pixels-and-cursor.swift\n".utf8))
@@ -531,7 +531,7 @@ snow.syncWindows([(2, CGRect(x: 150, y: 290, width: 115, height: 90)), (1, lower
 for _ in 0..<4 { snow.step(1 / 60) }
 precondition(snow.ledges[1]!.snow[1] == 0 && snow.flakes.isEmpty)
 precondition(abs(snow.ledges[1]!.snow.reduce(0,+) + snow.surfaceTransfers.reduce(0,{$0+$1.amount}) - 9) < 0.0001)
-print("Linke und rechte Fensterkante, Teilfelder, Schneemenge und Kontakt beim Vergrößern geprüft")
+print("Checked: left and right window edge, partial cells, snow amount and contact while resizing")
 
 }
 FileHandle.standardError.write(Data("v124-resize.swift\n".utf8))
@@ -585,7 +585,7 @@ precondition(raised.surfaceTransfers.first!.position.x > prior.x + 12)
 precondition(raised.surfaceTransfers.first!.position.y >= 303)
 raised.clearSnow()
 precondition(raised.surfaceTransfers.isEmpty)
-print("Sichtbare Reise, Erhaltung der Schneemenge, Hindernis, Fensterbewegung und Zurücksetzen geprüft")
+print("Checked: visible travel, conservation of snow amount, obstacle, window movement and reset")
 
 }
 FileHandle.standardError.write(Data("v124-transfer.swift\n".utf8))
@@ -618,7 +618,7 @@ snow.cacheDisplay(in: previewBounds(snow.bounds), to: preview)
 try preview.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: testOutput + "/v110-plow-load.png"))
 snow.startPlow()
 precondition(snow.plowLoad == 0 && snow.plowX == -70)
-print("Teilräumung, Masse, Lastbremse, Abladen und Neustart geprüft")
+print("Checked: partial clearing, mass, load brake, unloading and restart")
 func previewBounds(_ bounds: CGRect) -> CGRect {
     CGRect(x: 115, y: 0, width: bounds.width - 250, height: 120)
 }
@@ -668,7 +668,7 @@ precondition(snow.fallingSnowmen.count == 1)
 snow.clearSnow()
 for _ in 0..<30 { snow.step(1 / 60) }
 precondition(snow.fallingSnowmen.isEmpty && snow.flakes.isEmpty)
-print("Treffer, Kippen, Kopf, Bauch, Sockel, Schnee am Boden und Abbruch geprüft")
+print("Checked: hit, tipping, head, belly, base, snow on the ground and cancellation")
 
 }
 FileHandle.standardError.write(Data("v123-collapse.swift\n".utf8))
@@ -690,7 +690,7 @@ func testSaturatedDrift() {
     for _ in 0..<180 { snow.step(1/120) }
     precondition(snow.ground.max()! < peak - 3)
     precondition(abs(snow.ground.reduce(0,+)-804) < 0.0001)
-    print("Volle Schneeschicht: örtlicher Aufprall, sichtbares Abrutschen, Schneemenge erhalten")
+    print("Full snow layer: local impact, visible sliding, snow amount conserved")
 }
 func testPlowTrack() {
     let snow = SnowView(frame: CGRect(x:0,y:0,width:900,height:400))
@@ -710,9 +710,9 @@ func testPlowTrack() {
             maximumResidue = max(maximumResidue,snow.ground[first...last].max() ?? 0)
         }
         let mass = snow.ground.reduce(0,+) + snow.plowLoad + snow.plowRemoved + snow.flakes.reduce(0,{$0+$1.looseSnow})
-        precondition(abs(mass-729) < 0.0001, "Pflug verliert Schnee: \(mass)")
+        precondition(abs(mass-729) < 0.0001, "Snowplow loses snow: \(mass)")
     }
-    print("Restschnee direkt hinter dem Pflug: \(maximumResidue)")
+    print("Residual snow right behind the snowplow: \(maximumResidue)")
     precondition(maximumResidue > 7 && maximumResidue <= 9)
     precondition(snow.ground.reduce(0,+) >= 729-plowLoadLimit-0.0001)
 }
@@ -744,7 +744,7 @@ func testWindowContact() {
     precondition(view.flakes.isEmpty)
     precondition(abs(view.ledges[1]!.snow.reduce(0,+)-9) < 0.00001)
     precondition(view.ledges[1]!.snow[0...8].reduce(0,+) > 8.9)
-    print("Fenster nehmen Schnee aufwärts mit und schieben ihn seitlich vor sich her")
+    print("Windows carry snow upwards and push it sideways ahead of them")
 }
 testWindowContact()
 func testHeavyClearing() {
@@ -761,7 +761,7 @@ func testHeavyClearing() {
     var light = Array(repeating:CGFloat(1),count:100)
     for _ in 0..<300 { gentle.step(1/120,ground:&light,cell:8,width:800,smallLoad:4) }
     precondition(!gentle.active && gentle.removed == 0)
-    print("Große Schneefräse übernimmt bei Überlast, räumt vollständig und bleibt bei wenig Schnee aus")
+    print("Big snow blower takes over on overload, clears completely and stays off when there is little snow")
 }
 testHeavyClearing()
 func testSlowCorner() {
@@ -781,7 +781,7 @@ func testSlowCorner() {
     for _ in 0..<160 { view.step(1/120) }
     precondition(abs(view.ground.reduce(0,+)-8) < 0.001)
     precondition(view.runoff.isEmpty && view.surfaceTransfers.isEmpty)
-    print("Langsames Wischen über die Rundung: keine Wand, kein Resthaufen, Schnee landet unten")
+    print("Slow swipe over the rounded corner: no wall, no leftover pile, snow lands below")
 }
 testSlowCorner()
 
@@ -797,10 +797,10 @@ snow.step(0,cursor:CGPoint(x:140,y:305))
 for i in 1...300 { snow.step(1/120,cursor:CGPoint(x:140+CGFloat(i)*1.5,y:305)) }
 let mass = snow.ledges[1]!.snow.reduce(0,+) + snow.ground.reduce(0,+) + snow.surfaceTransfers.reduce(0,{$0+$1.amount})
     + snow.runoff.reduce(0,{$0+$1.amount}) + snow.flakes.reduce(0,{$0+$1.looseSnow}) + snow.workshop.balls.reduce(0,{$0+$1.mass})
-print("Ballbildung",snow.workshop.balls.map { ($0.x,$0.radius,$0.mass) },"Masse",mass,initial)
+print("Ball formation",snow.workshop.balls.map { ($0.x,$0.radius,$0.mass) },"Mass",mass,initial)
 precondition(snow.workshop.balls.count == 1 && abs(mass-initial) < 0.001)
 precondition(snow.workshop.balls[0].mass > 200 && snow.workshop.balls[0].x > 620)
-precondition(snow.workshop.balls[0].lastPush > 2.48, "Druckkontakt darf beim Wachsen nicht abreißen")
+precondition(snow.workshop.balls[0].lastPush > 2.48, "Pressure contact must not break off while growing")
 for sizes: [CGFloat] in [[18,12,7],[7,18,12],[12,7,18]] {
     let model = SnowWorkshop()
     for (i,r) in sizes.enumerated() {
@@ -820,7 +820,7 @@ for sizes: [CGFloat] in [[18,12,7],[7,18,12],[12,7,18]] {
     }
     precondition(model.snowmen.count == 1 && model.snowmen[0].map(\.radius) == sizes)
 }
-print("Klicken, Anheben, freies Stapeln und drei verschiedene Proportionen geprüft")
+print("Checked: clicking, lifting, free stacking and three different proportions")
 
 }
 testWorkshopIntegration()
@@ -846,7 +846,7 @@ func testCoveredInputAndStorage() throws {
     view.workshop.release(at:CGPoint(x:120,y:40))
     controller.tick()
     precondition(panel.ignoresMouseEvents)
-    let key = "Schneetag.test.packing." + UUID().uuidString
+    let key = "snowday.test.packing." + UUID().uuidString
     defer { UserDefaults.standard.removeObject(forKey:key); panel.close() }
     view.workshop.storageKey = key
     view.workshop.save()
@@ -854,7 +854,7 @@ func testCoveredInputAndStorage() throws {
     restored.storageKey = key
     restored.restore()
     precondition(restored.balls.count == 1 && restored.balls[0].mass == 100)
-    print("Klicks nach dem Ablegen freigegeben, auch bei verdecktem Desktop; Kugeln wiederhergestellt")
+    print("Clicks released after dropping, even with the desktop covered; snowballs restored")
 }
 try testCoveredInputAndStorage()
 
@@ -875,7 +875,7 @@ func testPackedContactsAndWindows() {
         let start = CGPoint(x:177+CGFloat(frame)*0.5,y:14)
         advance(touching,frame,CursorSweep(start:start,end:CGPoint(x:start.x+0.5,y:start.y),shape:CursorShape.arrow!,duration:1/120))
         let a = touching.balls[0], b = touching.balls[1]
-        precondition(hypot(a.x-b.x,a.y-b.y) >= a.radius+b.radius-0.4,"Kugeln durchdringen sich")
+        precondition(hypot(a.x-b.x,a.y-b.y) >= a.radius+b.radius-0.4,"Snowballs overlap each other")
     }
     precondition(touching.balls[1].x > 265 && touching.balls.reduce(0,{$0+$1.mass}) == mass)
     let vertical = SnowWorkshop()
@@ -884,7 +884,7 @@ func testPackedContactsAndWindows() {
         advance(vertical,frame,CursorSweep(start:CGPoint(x:300,y:80-CGFloat(frame)),
                 end:CGPoint(x:300,y:79-CGFloat(frame)),shape:CursorShape.arrow!,duration:1/120))
     }
-    precondition(vertical.balls[0].x == 300,"Senkrechtes Annähern darf Kugel nicht seitlich vertreiben")
+    precondition(vertical.balls[0].x == 300,"Approaching vertically must not push the snowball sideways")
     let snow = SnowView(frame:CGRect(x:0,y:0,width:800,height:500))
     snow.density = 0
     snow.plowEnabled = false
@@ -908,7 +908,7 @@ func testPackedContactsAndWindows() {
     ball(side.workshop,330,15,315,2,CGRect(x:116,y:300,width:568,height:1))
     side.syncWindows([(1,sideFront.offsetBy(dx:100,dy:0)),(2,back)])
     precondition(side.workshop.balls[0].x >= 395 && side.workshop.balls[0].surface == 2)
-    print("Kugeln verdrängen sich ohne Masseverlust; senkrechter Griff stabil; Fenster heben und schieben Kugeln")
+    print("Snowballs push each other aside without losing mass; vertical grab stable; windows lift and push snowballs")
 }
 testPackedContactsAndWindows()
 
@@ -928,7 +928,7 @@ func testSnowBudgetFallback() {
     snow.injectBudgetDrop()
     precondition(abs(snow.ground.reduce(0,+)-expected) < 0.001)
     precondition(snow.ground[50] == 113)
-    print("Auch bei vollem Partikelbudget bleibt die Schneemenge am Aufprallort erhalten")
+    print("Even with a full particle budget, the snow amount at the impact point is conserved")
 }
 testSnowBudgetFallback()
 
@@ -944,7 +944,7 @@ func testGrabbingAtPressureContact() {
         pointer.x += 0.5
         view.step(1/120,cursor:pointer)
     }
-    precondition(view.wantsInteraction(at:pointer),"Geschobene Kugel muss am selben Berührungspunkt greifbar sein")
+    precondition(view.wantsInteraction(at:pointer),"A pushed snowball must be grabbable at the same contact point")
     view.workshop.down(at:pointer,visible:{_ in true})
     precondition(view.workshop.held != nil)
     let rest = SnowWorkshop()
@@ -964,7 +964,7 @@ func testGrabbingAtPressureContact() {
     support.step(1/120,time:1,sweep:nil,ledges:[1:snowy],bounds:view.bounds,groundHeight:{_ in 0.5},
                  visible:{_ in true},collect:{_,_,_,_ in 0})
     precondition(abs(support.balls[0].y-322) < 0.001)
-    print("Kugel am Druckpunkt greifbar; Fallen auf andere Kugel stapelt; Auflage folgt Schneehöhe")
+    print("Snowball grabbable at the pressure point; falling onto another snowball stacks; support follows snow height")
 }
 testGrabbingAtPressureContact()
 
@@ -990,7 +990,7 @@ func testDesktopSuspension() {
     precondition(view.workshop.balls[0].mass == ball.mass && view.workshop.balls[0].surface == 1)
     precondition(abs(view.workshop.balls[0].y-ball.y)<0.001)
     precondition(!view.workshop.isSuspended(view.workshop.balls[0]))
-    print("Desktop einblenden: Fensterauflage und Kugel bleiben eingefroren und kehren unverändert zurück")
+    print("Show desktop: window snow and snowball stay frozen and return unchanged")
 }
 testDesktopSuspension()
 
@@ -999,7 +999,7 @@ func testBacklogAndPlowExclusion() {
         let blower = HeavyPlow()
         var ground = values
         for _ in 0..<1200 { blower.step(1/120,ground:&ground,cell:8,width:800,smallLoad:29) }
-        precondition(!blower.active,"Volle Schaufel oder einzelner hoher Krümel ist kein Schneestau")
+        precondition(!blower.active,"A full blade or a single tall crumb is not a snow jam")
     }
     let view = SnowView(frame:CGRect(x:0,y:0,width:800,height:500))
     view.density = 0; view.workshopEnabled = false
@@ -1010,7 +1010,7 @@ func testBacklogAndPlowExclusion() {
     for _ in 0..<2400 {
         view.step(1/120)
         if view.heavyPlow.active {
-            if let stopped { precondition(view.plowX == stopped,"Kleiner Pflug fährt während der Fräsenfahrt") }
+            if let stopped { precondition(view.plowX == stopped,"Small snowplow moves while the snow blower is running") }
             else { stopped = view.plowX }
         } else if stopped != nil {
             precondition(view.plowX < 0)
@@ -1019,7 +1019,7 @@ func testBacklogAndPlowExclusion() {
         }
     }
     precondition(stopped != nil && resumed)
-    print("Fräse nur bei anhaltendem Bodenstau; kleiner Pflug steht währenddessen und startet danach von links")
+    print("Snow blower only on a sustained ground jam; small snowplow waits meanwhile and then restarts from the left")
 }
 testBacklogAndPlowExclusion()
 
@@ -1047,7 +1047,7 @@ func testGenerousGrabAndFixedStackSize() {
                    groundHeight:{_ in 0.5},visible:{_ in true},collect:{_,_,_,_ in collected += 1; return 1 })
     }
     precondition(model.snowmen.count == 1 && model.balls.map(\.mass) == masses && collected == 0)
-    print("Große Greifzone schützt vor Desktop-Klicks; ganze Schneemänner wachsen beim Schieben nicht")
+    print("Large grab zone guards against desktop clicks; complete snowmen do not grow when pushed")
 }
 testGenerousGrabAndFixedStackSize()
 
@@ -1067,7 +1067,7 @@ func testHiddenBallsCannotCatchNewOnes() {
     }
     precondition(model.balls.count == 1 && model.balls[0].y == 315)
     precondition(model.impacts.count == 1 && abs(model.impacts[0].mass-8*8*CGFloat.pi/8) < 0.001)
-    print("Gespeicherte unsichtbare Kugeln blockieren weder Formen noch Fallen oder Stapeln")
+    print("Stored invisible snowballs block neither forming nor falling nor stacking")
 }
 testHiddenBallsCannotCatchNewOnes()
 
@@ -1090,7 +1090,7 @@ func testGrabHandDoesNotChangePressure() {
     precondition(controller.checkedCursorRows == original)
     controller.sampleCursor(at:CGPoint(x:500,y:200),system:.iBeam)
     precondition(controller.checkedCursorRows == CursorShape(NSCursor.iBeam)?.rows)
-    print("Greifhand und 5-mm-Klickzone verändern die Druckkontur nicht; echte App-Zeiger werden weiterhin erkannt")
+    print("Grab hand and 5 mm click zone do not change the pressure outline; real app pointers are still recognized")
 }
 testGrabHandDoesNotChangePressure()
 
@@ -1108,7 +1108,7 @@ func testPartiallyHiddenWindowAndRestoredPressure() {
     view.syncWindows([(1,frame)],existingWindows:[1])
     view.step(1/60)
     precondition(view.ledges[1]!.snow == before && view.flakes.isEmpty)
-    let key = "Schneetag.test.restore-pressure."+UUID().uuidString
+    let key = "snowday.test.restore-pressure."+UUID().uuidString
     defer { UserDefaults.standard.removeObject(forKey:key) }
     let model = SnowWorkshop()
     model.storageKey = key
@@ -1122,7 +1122,7 @@ func testPartiallyHiddenWindowAndRestoredPressure() {
     restored.restore()
     precondition(restored.balls[0].lastPush < 0 && restored.balls[0].vx == 0)
     precondition(restored.balls[0].mass == model.balls[0].mass && restored.balls[0].x == model.balls[0].x)
-    print("Schmaler Fensterrest erhält die Auflage; Wiederherstellung übernimmt keine veralteten Cursorimpulse")
+    print("A narrow remaining window strip keeps its snow; restoring does not carry over stale cursor momentum")
 }
 testPartiallyHiddenWindowAndRestoredPressure()
 
@@ -1150,13 +1150,13 @@ func testPackedBallRoundCorners() {
                 precondition(hypot(ball.x-cornerX,ball.y-284) >= 28-0.001)
             }
             let disk = CGRect(x:ball.x-radius,y:ball.y-radius,width:radius*2,height:radius*2)
-            precondition(!window.contains(disk),"Kugel verschwindet beim langsamen Rollen im Fenster")
+            precondition(!window.contains(disk),"Snowball disappears into the window while rolling slowly")
         }
         precondition(rounded > 3 && view.workshop.balls.isEmpty)
         let landed = view.ground.reduce(0,+)+view.flakes.reduce(0,{$0+$1.looseSnow})
         precondition(abs(landed-radius*radius*CGFloat.pi/8) < 0.001)
     }
-    print("Kugeln rollen links und rechts über die Rundung, fallen außerhalb des Fensters und behalten ihre Masse")
+    print("Snowballs roll left and right over the rounded corner, fall outside the window and keep their mass")
 }
 testPackedBallRoundCorners()
 
@@ -1173,7 +1173,7 @@ func testGroundImpactBreakup() {
         view.step(1/120)
         if view.workshop.balls.isEmpty && view.flakes.contains(where:{$0.looseSnow>0}) { sawFragments = true }
         let current = view.workshop.balls.reduce(0,{$0+$1.mass})+view.flakes.reduce(0,{$0+$1.looseSnow})+view.ground.reduce(0,+)
-        precondition(abs(current-mass) < 0.001,"Aufprall muss die Schneemenge erhalten")
+        precondition(abs(current-mass) < 0.001,"Impact must conserve the snow amount")
     }
     precondition(sawFragments && view.workshop.balls.isEmpty && abs(view.ground.reduce(0,+)-mass)<0.001)
     let gentle = SnowWorkshop()
@@ -1185,7 +1185,7 @@ func testGroundImpactBreakup() {
                     visible:{_ in true},collect:{_,_,_,_ in 0})
     }
     precondition(gentle.balls.count == 1 && !gentle.balls[0].falling && gentle.impacts.isEmpty)
-    print("Harter Bodenaufprall zerlegt Kugeln in Schnee; sanftes Ablegen bleibt heil; Masse in jedem Schritt erhalten")
+    print("Hard ground impact breaks snowballs into snow; gentle drop stays intact; mass conserved at every step")
 }
 testGroundImpactBreakup()
 
@@ -1225,7 +1225,7 @@ func testThrowMomentumAndStackImpact() {
     }
     precondition(stack.balls.isEmpty && stack.impacts.count == 3)
     precondition(abs(stack.impacts.reduce(0,{$0+$1.mass})-total)<0.001)
-    print("Wurf übernimmt die Handbewegung; harte Stapellandung zerfällt nacheinander ohne hängende Kugeln")
+    print("Throw takes over the hand motion; a hard landing on a stack breaks apart piece by piece with no floating snowballs")
 }
 testThrowMomentumAndStackImpact()
 
@@ -1262,7 +1262,7 @@ func testCornerStackSuspension() {
     view.step(1/120)
     precondition(view.workshop.balls.allSatisfy { !view.workshop.isSuspended($0) })
     precondition(view.workshop.balls.map(\.mass) == masses && view.workshop.snowmen.count == 1)
-    print("Auch ein gerade über die Ecke rollender Schneemann bleibt beim Ausblenden vollständig gespeichert")
+    print("Even a snowman rolling over the corner right now is fully saved when hidden")
 }
 testCornerStackSuspension()
 
@@ -1277,7 +1277,7 @@ func testSingleTravelAtCornerAndSteadyThrow() {
     model.step(1/120,time:1/120,sweep:CursorSweep(start:start,end:CGPoint(x:start.x+0.3,y:start.y),shape:shape,duration:1/120),
                ledges:[1:ledge],bounds:bounds,groundHeight:{_ in 0.5},visible:{_ in true},collect:{_,_,_,_ in 0})
     let edge = model.balls[0]
-    precondition(edge.edgeSurface == 1 && edge.x-683.9 < 0.302,"Ein Physikschritt darf an der Ecke nicht doppelt weit gehen")
+    precondition(edge.edgeSurface == 1 && edge.x-683.9 < 0.302,"A physics step must not travel twice as far at the corner")
     var impulses:[CGVector] = []
     for rate:CGFloat in [30,60,120] {
         let model = SnowWorkshop()
@@ -1293,7 +1293,7 @@ func testSingleTravelAtCornerAndSteadyThrow() {
     }
     precondition((impulses.map(\.dx).max()!-impulses.map(\.dx).min()!) < 0.001)
     precondition((impulses.map(\.dy).max()!-impulses.map(\.dy).min()!) < 0.001)
-    print("Kein Bewegungssprung beim Übergang in den Fall; Wurfimpuls bei 30/60/120 Abtastungen gleich")
+    print("No jump in motion when switching to falling; throw momentum equal at 30/60/120 samples")
 }
 testSingleTravelAtCornerAndSteadyThrow()
 
@@ -1309,7 +1309,7 @@ func testSmallPlowOnlyNibblesAndNeverBuildsSpikes() {
             let total = view.ground.reduce(0,+)+view.plowLoad+view.plowRemoved
             precondition(abs(total-1400)<0.0001)
             precondition(view.plowLoad <= 12 && view.ground.max()! <= 14.0001)
-            precondition(view.flakes.isEmpty,"Keine neue Schneespitze durch wieder eingesammelten Auswurf")
+            precondition(view.flakes.isEmpty,"No new snow spike from re-collected discharge")
             if view.plowRemoved > 0 {
                 precondition(abs(view.plowRemoved-12)<0.0001 && view.ground.reduce(0,+)>1387.99)
                 completed = true
@@ -1326,10 +1326,10 @@ func testSmallPlowOnlyNibblesAndNeverBuildsSpikes() {
         loaded.step(1/120)
         precondition(loaded.plowLoad <= 12)
         let total=loaded.ground.reduce(0,+)+loaded.plowLoad+loaded.plowRemoved+loaded.flakes.reduce(0,{$0+$1.looseSnow})
-        precondition(abs(total-100)<0.0001,"Auch Schnee, der auf die volle Schaufel fällt, darf nicht verschwinden")
+        precondition(abs(total-100)<0.0001,"Even snow that falls onto the full blade must not disappear")
     }
     precondition(loaded.flakes.isEmpty && loaded.ground.reduce(0,+)>=88)
-    print("Kleiner Pflug nimmt je Fahrt höchstens 12 mit, lässt den Rest liegen und baut bei 30/60/120 Hz keine Spitzen auf")
+    print("Small snowplow takes at most 12 per run, leaves the rest and builds no spikes at 30/60/120 Hz")
 }
 testSmallPlowOnlyNibblesAndNeverBuildsSpikes()
 
@@ -1353,11 +1353,11 @@ func testOneHeavyPassAfterActualAccumulation() {
         }
         wasActive=view.heavyPlow.active
         let mass=view.ground.reduce(0,+)+view.plowLoad+view.plowRemoved+view.heavyPlow.removed
-        precondition(abs(mass-total)<0.0001,"Übergabe an die große Fräse verliert oder dupliziert Schnee")
+        precondition(abs(mass-total)<0.0001,"Handover to the big snow blower loses or duplicates snow")
     }
     precondition(heavyPasses==1 && view.heavyPlow.removed>total*0.9)
     precondition(view.ground.max()!<2.1)
-    print("Nach echtem Schneeaufbau räumt die Fräse genau einmal gründlich; kleine Fahrt pausiert und Masse bleibt bilanziert")
+    print("After real snow buildup the snow blower clears thoroughly exactly once; the small run pauses and mass stays balanced")
 }
 testOneHeavyPassAfterActualAccumulation()
 
@@ -1379,9 +1379,9 @@ func testSnowmanPersonalityAndPlacement() {
     view.density=0;view.plowEnabled=false;view.step(0)
     addFightSnowman(view,x:170,sizes:[23,16,11],offset:3)
     let stack=view.workshop.snowmen[0]
-    precondition(stack.allSatisfy { abs($0.x-stack[0].x)<0.001 },"Jede Kugel muss genau mittig über der unteren Kugel stehen")
+    precondition(stack.allSatisfy { abs($0.x-stack[0].x)<0.001 },"Each snowball must sit exactly centered on the snowball below")
     let look=SnowmanLook(stack)
-    let key="schneetag.test.personality";view.workshop.storageKey=key;defer{UserDefaults.standard.removeObject(forKey:key)}
+    let key="snowday.test.personality";view.workshop.storageKey=key;defer{UserDefaults.standard.removeObject(forKey:key)}
     view.workshop.crown(stack[0].id);view.workshop.save()
     let restored=SnowWorkshop();restored.storageKey=key;restored.restore()
     let saved=restored.snowmen[0],same=SnowmanLook(saved)
@@ -1392,7 +1392,7 @@ func testSnowmanPersonalityAndPlacement() {
     UserDefaults.standard.set(try! JSONEncoder().encode(legacy),forKey:key)
     let upgraded=SnowWorkshop();upgraded.storageKey=key;upgraded.restore()
     precondition(upgraded.snowmen[0].allSatisfy { abs($0.x-upgraded.snowmen[0][0].x)<0.001 },
-                 "Auch gespeicherte frühere Stapel müssen sofort mittig ausgerichtet werden")
+                 "Previously saved stacks must also be centered immediately")
     var hats=Set<Int>(),colors=Set<Int>(),widths=Set<CGFloat>()
     for i in 0..<60 {
         var sample=stack
@@ -1400,7 +1400,7 @@ func testSnowmanPersonalityAndPlacement() {
         let variant=SnowmanLook(sample);hats.insert(variant.hat);colors.insert(variant.palette);widths.insert(variant.branchWidth)
     }
     precondition(hats.count==6 && colors.count==7 && widths.count>=4)
-    print("Sechs Hutformen, sieben Farben, variable Äste und Karotten; Kugeln stehen mittig, Persönlichkeit und Krone bleiben gespeichert")
+    print("Six hat shapes, seven colors, varied twigs and carrots; snowballs are centered, personality and crown stay saved")
 }
 testSnowmanPersonalityAndPlacement()
 
@@ -1421,7 +1421,7 @@ func testSnowballFightRoundAndConservation() {
             sawDamage = sawDamage || !view.flakes.isEmpty
             let mass=view.workshop.balls.reduce(0,{$0+$1.mass})+view.fight.shots.reduce(0,{$0+$1.mass})
                 + view.flakes.reduce(0,{$0+$1.looseSnow})+view.ground.reduce(0,+)
-            precondition(abs(mass-initial)<0.001,"Schneeballschlacht verliert Schnee: \(mass), erwartet \(initial)")
+            precondition(abs(mass-initial)<0.001,"Snowball fight loses snow: \(mass), expected \(initial)")
             precondition(view.plowX==stopped && !view.heavyPlow.active)
             if let winner=view.fight.winner {
                 precondition(!view.fight.fighting && view.workshop.snowmen.count==1)
@@ -1430,9 +1430,9 @@ func testSnowballFightRoundAndConservation() {
                 won=true;break
             }
         }
-        precondition(sawFlight && sawDamage && won,"Jede Runde muss bis zu einem gekrönten Überlebenden laufen")
+        precondition(sawFlight && sawDamage && won,"Every round must run until there is one crowned survivor")
     }
-    print("Schneeballschlacht bei 30/120 Hz: Würfe, Treffer, Zerfallen, ein Sieger mit Krone; Schneemenge erhalten und Pflüge pausiert")
+    print("Snowball fight at 30/120 Hz: throws, hits, crumbling, one winner with a crown; snow amount conserved and snowplows paused")
 }
 testSnowballFightRoundAndConservation()
 
@@ -1458,7 +1458,7 @@ func testFightHiddenPauseAndCancellation() {
     precondition(!view.fight.isRunning && view.fight.shots.isEmpty && view.fight.winner==nil)
     let after=view.workshop.balls.reduce(0,{$0+$1.mass})+view.flakes.reduce(0,{$0+$1.looseSnow})+view.ground.reduce(0,+)
     precondition(abs(initial-after)<0.001)
-    print("Eine Figur startet keine Schlacht; ausgeblendete Figuren pausieren die Runde; Beenden gibt geworfenen Schnee zurück")
+    print("A single figure does not start a fight; hidden figures pause the round; ending it returns thrown snow")
 }
 testFightHiddenPauseAndCancellation()
 
@@ -1479,14 +1479,14 @@ func testBattleNeverPaintsOverWorkingWindow() throws {
             view.cacheDisplay(in:view.bounds,to:rep)
             let scale=CGFloat(rep.pixelsWide)/view.bounds.width
             let alpha=rep.colorAt(x:Int(point.x*scale),y:rep.pixelsHigh-1-Int(point.y*scale))!.alphaComponent
-            precondition(alpha<0.01,"Geworfene Schneebälle dürfen Arbeitsfenster nicht übermalen")
+            precondition(alpha<0.01,"Thrown snowballs must not paint over working windows")
             checked=true;break
         }
     }
     precondition(checked)
     view.clearSnowmen()
     precondition(!view.fight.isRunning && view.fight.shots.isEmpty && view.workshop.balls.isEmpty)
-    print("Geworfene Bälle bleiben hinter Arbeitsfenstern; Entfernen der Figuren beendet auch eine laufende Runde")
+    print("Thrown balls stay behind working windows; removing the figures also ends a running round")
 }
 try testBattleNeverPaintsOverWorkingWindow()
 
@@ -1506,17 +1506,17 @@ func testChristmasVisitorsAndWindowMask() {
             view.cacheDisplay(in:view.bounds,to:rep)
             let scale=CGFloat(rep.pixelsWide)/view.bounds.width
             let sample=rep.colorAt(x:Int(point.x*scale),y:rep.pixelsHigh-1-Int(point.y*scale))!
-            precondition(sample.alphaComponent<0.01,"Der Schlitten darf kein Arbeitsfenster übermalen")
+            precondition(sample.alphaComponent<0.01,"The sleigh must not paint over any working window")
             checkedMask=true
         }
         if sawSanta && sawReindeer && checkedMask { break }
     }
     precondition(sawSanta && sawReindeer && checkedMask)
     let mass=view.ground.reduce(0,+)+view.flakes.reduce(0,{$0+$1.looseSnow})
-    precondition(mass==0,"Weihnachtsbesuche dürfen keine Schneemasse erfinden")
+    precondition(mass==0,"Christmas visitors must not invent snow mass")
     view.christmas=false
     precondition(!view.christmasScene.hasSanta && !view.christmasScene.hasReindeer)
-    print("Weihnachtsbesuch: Schlitten und Rentier erscheinen, Fenster bleiben frei, Besucher erzeugen keinen Schnee und lassen sich sauber ausschalten")
+    print("Christmas visit: sleigh and reindeer appear, windows stay clear, visitors create no snow and can be switched off cleanly")
 }
 testChristmasVisitorsAndWindowMask()
 
@@ -1557,17 +1557,17 @@ func testChristmasGiftAndEmoji() {
             if gift.landed { resting=gift;break }
         }
     }
-    guard let gift=resting else { preconditionFailure("Der Schlitten muss ein Geschenk abwerfen") }
-    precondition(sawParachute,"Das Geschenk muss sichtbar herunterschweben, nicht sofort liegen")
-    precondition(gift.surface == 7,"Das Geschenk gehört auf die Fensterkante, nicht auf den Boden")
+    guard let gift=resting else { preconditionFailure("The sleigh must drop a gift") }
+    precondition(sawParachute,"The gift must visibly float down, not appear on the ground instantly")
+    precondition(gift.surface == 7,"The gift belongs on the window edge, not on the ground")
     let lip=view.ledges[7]!.height(at:gift.x)
-    precondition(abs(gift.y-(lip+gift.size/2))<0.6,"Das Geschenk muss auf der Auflage aufsitzen")
+    precondition(abs(gift.y-(lip+gift.size/2))<0.6,"The gift must rest on the snow layer")
     precondition(gift.x>window.minX && gift.x<window.maxX)
-    precondition(view.wantsInteraction(at:CGPoint(x:gift.x,y:gift.y)),"Über dem Geschenk muss der Klick ankommen")
+    precondition(view.wantsInteraction(at:CGPoint(x:gift.x,y:gift.y)),"A click over the gift must get through")
     precondition(view.giftUnderPointer(at:CGPoint(x:gift.x+gift.reach+6,y:gift.y)) == nil)
-    precondition(!view.wantsInteraction(at:CGPoint(x:gift.x,y:gift.y-90)),"Daneben bleibt der Desktop klickbar")
+    precondition(!view.wantsInteraction(at:CGPoint(x:gift.x,y:gift.y-90)),"Next to it the desktop stays clickable")
 
-    // Verdeckte Fenster frieren das Geschenk ein, wie die Schneeauflage auch.
+    // Covered windows freeze the gift, just like the snow on them.
     view.syncWindows([],existingWindows:[7])
     view.step(1/120)
     precondition(view.giftUnderPointer(at:CGPoint(x:gift.x,y:gift.y)) == nil)
@@ -1576,27 +1576,27 @@ func testChristmasGiftAndEmoji() {
     precondition(view.giftUnderPointer(at:CGPoint(x:gift.x,y:gift.y)) == gift.id)
 
     precondition(view.christmasScene.open(gift.id))
-    precondition(!view.christmasScene.open(gift.id),"Ein Geschenk lässt sich nur einmal öffnen")
+    precondition(!view.christmasScene.open(gift.id),"A gift can only be opened once")
     precondition(view.christmasScene.gifts.isEmpty && view.christmasScene.popCount>=5)
     precondition(view.christmasScene.isAnimating)
     for _ in 0..<300 { view.step(1/120) }
-    precondition(view.christmasScene.popCount==0,"Die Emojis müssen wieder verschwinden")
+    precondition(view.christmasScene.popCount==0,"The emojis must disappear again")
     let mass=view.ground.reduce(0,+)+view.flakes.reduce(0,{$0+$1.looseSnow})
-    precondition(mass==0,"Geschenke dürfen keinen Schnee erfinden")
+    precondition(mass==0,"Gifts must not invent snow")
     view.christmas=false
     precondition(!view.christmasScene.hasGift && view.christmasScene.popCount==0)
-    print("Geschenk am Fallschirm landet auf der Fensterkante, ist nur dort klickbar, friert mit dem Fenster ein und platzt in Emojis")
+    print("Parachuting gift lands on the window edge, is clickable only there, freezes with the window and bursts into emojis")
 }
 testChristmasGiftAndEmoji()
 
 func testSantaDropsNoGifts() {
-    // Auf Wunsch: Der Weihnachtsmann wirft keine Geschenke mehr ab.
+    // By request: Santa no longer drops gifts.
     let view=SnowView(frame:CGRect(x:0,y:0,width:900,height:560))
     view.density=0;view.plowEnabled=false;view.workshopEnabled=false;view.christmas=true
     view.syncWindows([(7,CGRect(x:200,y:40,width:460,height:160))],existingWindows:[7])
     view.step(0);view.inviteChristmasMoment()
-    for _ in 0..<8000 { view.step(1/120); precondition(view.christmasScene.gifts.isEmpty,"Kein Geschenk mehr") }
-    print("Der Weihnachtsmann landet und fliegt weiter, ohne Geschenke abzuwerfen")
+    for _ in 0..<8000 { view.step(1/120); precondition(view.christmasScene.gifts.isEmpty,"No more gifts") }
+    print("Santa lands and flies on without dropping gifts")
 }
 testSantaDropsNoGifts()
 
@@ -1623,12 +1623,12 @@ func testThrowAnimationPhases() {
         }
         if lowest < -0.9 && highest > 0.9 && heldWhileDrawingBack && emptyAfterRelease && leanedBack { break }
     }
-    precondition(lowest < -0.9,"Der Arm muss sichtbar ausholen")
-    precondition(highest > 0.9,"Nach dem Lösen muss der Arm nach vorn durchschwingen")
-    precondition(heldWhileDrawingBack,"Beim Ausholen liegt der Ball in der Hand")
-    precondition(emptyAfterRelease,"Nach dem Wurf ist die Hand leer")
-    precondition(leanedBack,"Der Körper verlagert sein Gewicht beim Ausholen")
-    print("Wurfanimation: Ausholen mit Ball in der Hand, Gewichtsverlagerung, Schnappen nach vorn und leere Hand danach")
+    precondition(lowest < -0.9,"The arm must visibly wind up")
+    precondition(highest > 0.9,"After release the arm must swing through forwards")
+    precondition(heldWhileDrawingBack,"During the wind-up the ball is in the hand")
+    precondition(emptyAfterRelease,"After the throw the hand is empty")
+    precondition(leanedBack,"The body shifts its weight during the wind-up")
+    print("Throw animation: wind-up with ball in hand, weight shift, snap forwards and empty hand afterwards")
 }
 testThrowAnimationPhases()
 
@@ -1721,7 +1721,7 @@ func renderShowcase() throws {
     if let output=ProcessInfo.processInfo.environment["SNOW_SHOWCASE_OUTPUT"] {
         try png.write(to:URL(fileURLWithPath:output))
     }
-    print("Schaubild gerendert: kleiner Pflug, Weihnachtspflug, Fräse, Wurf und Geschenk")
+    print("Showcase rendered: small snowplow, Christmas snowplow, snow blower, throw and gift")
 }
 try renderShowcase()
 
@@ -1731,30 +1731,30 @@ func testFestivePointerOnDesktop() {
     let window=CGRect(x:200,y:100,width:300,height:200)
     view.syncWindows([(9,window)],existingWindows:[9])
     view.step(0)
-    // Menüleiste oben, Dock unten: beides bleibt außerhalb der Fangfläche.
+    // Menu bar at the top, Dock at the bottom: both stay outside the capture area.
     view.safeArea=CGRect(x:0,y:70,width:800,height:400)
     let free=CGPoint(x:70,y:260),onWindow=CGPoint(x:350,y:200)
-    precondition(!view.wantsInteraction(at:free),"Ohne Weihnachtsmodus bleibt der Desktop durchlässig")
+    precondition(!view.wantsInteraction(at:free),"Without Christmas mode the desktop stays click-through")
     view.christmas=true
-    // Die Übernahme ist seit 1.43 standardmäßig aus: sie schluckt Desktop-Klicks.
-    precondition(!view.desktopPointer,"Voreinstellung: der Desktop behält seinen Zeiger")
-    precondition(!view.wantsInteraction(at:free),"Abgeschaltet bleibt die freie Fläche durchlässig")
+    // Taking over the pointer has been off by default since 1.43: it swallows desktop clicks.
+    precondition(!view.desktopPointer,"Default: the desktop keeps its pointer")
+    precondition(!view.wantsInteraction(at:free),"When off, the free area stays click-through")
     view.desktopPointer=true
-    precondition(view.wantsInteraction(at:free),"Eingeschaltet nimmt die freie Fläche den Zeiger an")
-    precondition(!view.wantsInteraction(at:onWindow),"Über einem Arbeitsfenster bleibt alles unverändert")
-    precondition(!view.wantsInteraction(at:CGPoint(x:70,y:20)),"Im Dock-Bereich darf nichts abgefangen werden")
-    precondition(!view.wantsInteraction(at:CGPoint(x:70,y:486)),"In der Menüleiste ebenso wenig")
-    // Ein Desktop-Symbol an dieser Stelle gewinnt immer: klicken und ziehen gehen an das Symbol.
+    precondition(view.wantsInteraction(at:free),"When on, the free area takes the pointer")
+    precondition(!view.wantsInteraction(at:onWindow),"Over a working window nothing changes")
+    precondition(!view.wantsInteraction(at:CGPoint(x:70,y:20)),"Nothing may be captured in the Dock area")
+    precondition(!view.wantsInteraction(at:CGPoint(x:70,y:486)),"Nor in the menu bar")
+    // A desktop icon at this spot always wins: clicks and drags go to the icon.
     view.desktopIcons=[CGRect(x:40,y:230,width:64,height:72)]
-    precondition(!view.wantsInteraction(at:free),"Über einem Desktop-Symbol fängt Schneetag nichts ab")
-    precondition(view.wantsInteraction(at:CGPoint(x:150,y:260)),"Daneben bleibt die freie Fläche bei Schneetag")
+    precondition(!view.wantsInteraction(at:free),"Over a desktop icon Snow Day captures nothing")
+    precondition(view.wantsInteraction(at:CGPoint(x:150,y:260)),"Next to it the free area stays with Snow Day")
     view.desktopIcons=[]
     view.desktopPointer=false
-    precondition(!view.wantsInteraction(at:free),"Abgeschaltet gibt die Schneeschicht die Klicks wieder frei")
+    precondition(!view.wantsInteraction(at:free),"When off, the snow layer releases the clicks again")
     view.desktopPointer=true
     view.christmas=false
-    precondition(!view.wantsInteraction(at:free),"Außerhalb des Weihnachtsmodus bleibt es dabei")
-    print("Weihnachtszeiger auf dem Desktop: standardmäßig aus; eingeschaltet freie Fläche ja, Fenster, Dock und Menüleiste nein")
+    precondition(!view.wantsInteraction(at:free),"Outside Christmas mode it stays that way")
+    print("Christmas pointer on the desktop: off by default; when on, free area yes, windows, Dock and menu bar no")
 }
 testFestivePointerOnDesktop()
 
@@ -1772,7 +1772,7 @@ func testSleighLandingSequence() {
     for _ in 0..<9000 {
         view.step(1/120);clock+=1/120
         guard let phase=view.christmasScene.sleighPhase,let contact=view.christmasScene.sleighContact else {
-            // Nach dem ersten Besuch aufhören, sonst zählt der nächste mit.
+            // Stop after the first visit, otherwise the next one is counted too.
             if seen.contains(.takeoff) { leftBy=clock;break }
             continue
         }
@@ -1780,39 +1780,39 @@ func testSleighLandingSequence() {
         let lip=view.ledges[4]!.height(at:contact.x)
         switch phase {
         case .approach:
-            precondition(contact.y>=lip-0.5,"Der Anflug darf nicht durch die Fensterkante sinken")
+            precondition(contact.y>=lip-0.5,"The approach must not sink through the window edge")
         case .brake:
             if brakeStart<0 { brakeStart=clock;touchdownSpeed=view.christmasScene.sleighSpeed;lastSpeed = .infinity }
-            precondition(abs(contact.y-lip)<0.6,"Beim Bremsen laufen die Kufen auf der Auflage")
+            precondition(abs(contact.y-lip)<0.6,"While braking, the runners glide on the snow layer")
             let speed=view.christmasScene.sleighSpeed
             brakeMonotone = brakeMonotone && speed<=lastSpeed+0.0001
             lastSpeed=speed
             stopX=contact.x
         case .rest:
-            precondition(view.christmasScene.sleighSpeed==0,"Im Stand bewegt sich nichts mehr")
-            precondition(abs(contact.y-lip)<0.6,"Im Stand bleibt das Gespann auf der Kante")
+            precondition(view.christmasScene.sleighSpeed==0,"At rest nothing moves any more")
+            precondition(abs(contact.y-lip)<0.6,"At rest the team stays on the edge")
             restSeconds+=1/120
         case .takeoff:
             climbed=max(climbed,contact.y-lip)
         case .cruise: break
         }
     }
-    precondition(seen==[.cruise,.approach,.brake,.rest,.takeoff],"Reihenfolge der Phasen: \(seen)")
-    precondition(touchdownSpeed>60,"Beim Aufsetzen ist noch Fahrt drauf: \(touchdownSpeed)")
-    precondition(brakeMonotone,"Die Bremsung darf nicht wieder beschleunigen")
+    precondition(seen==[.cruise,.approach,.brake,.rest,.takeoff],"Order of phases: \(seen)")
+    precondition(touchdownSpeed>60,"Still moving at touchdown: \(touchdownSpeed)")
+    precondition(brakeMonotone,"Braking must not speed up again")
     let sill=view.ledges[4]!.frame
     let direction=1.0
     _=direction
     let nose=stopX+view.christmasScene.sleighDirection*SleighArt.noseX
     let tail=stopX+view.christmasScene.sleighDirection*SleighArt.tailX
     precondition(min(nose,tail)>=sill.minX-1 && max(nose,tail)<=sill.maxX+1,
-                 "Das ganze Gespann muss nach dem Ausrollen auf der Kante stehen: \(tail)…\(nose) in \(sill)")
-    precondition(restSeconds>2.5,"Der Halt dauert sichtbar an: \(restSeconds)")
-    precondition(climbed>40,"Beim Start hebt das Gespann sichtbar ab: \(climbed)")
-    precondition(leftBy>0,"Der Besuch endet von selbst")
+                 "The whole team must stand on the edge after rolling to a stop: \(tail)…\(nose) in \(sill)")
+    precondition(restSeconds>2.5,"The stop lasts visibly long: \(restSeconds)")
+    precondition(climbed>40,"On takeoff the team visibly lifts off: \(climbed)")
+    precondition(leftBy>0,"The visit ends on its own")
     let mass=view.ground.reduce(0,+)+view.flakes.reduce(0,{$0+$1.looseSnow})
-    precondition(mass==0,"Landung und Start erzeugen keinen Schnee")
-    print("Schlittenlandung: Anflug, Aufsetzen mit Fahrt, gleichmäßige Bremsung aufs Fenster, Halt, Abdruck und Steigflug")
+    precondition(mass==0,"Landing and takeoff create no snow")
+    print("Sleigh landing: approach, touchdown while moving, smooth braking onto the window, stop, push-off and climb")
 }
 testSleighLandingSequence()
 
@@ -1827,18 +1827,18 @@ func testSleighLeavesWhenWindowGoes() {
         view.step(1/120)
         if view.christmasScene.sleighPhase == .rest { landed=true;break }
     }
-    precondition(landed,"Für diese Prüfung muss das Gespann erst landen")
+    precondition(landed,"For this check the team must land first")
     view.syncWindows([],existingWindows:[4])
     view.step(1/120)
-    precondition(view.christmasScene.sleighPhase == .takeoff,"Verschwindet das Fenster, startet das Gespann sofort")
+    precondition(view.christmasScene.sleighPhase == .takeoff,"If the window disappears, the team takes off immediately")
     var gone=false
     for _ in 0..<2400 {
         view.step(1/120)
         if view.christmasScene.sleighPhase == nil { gone=true;break }
     }
-    precondition(gone,"Danach verlässt es den Bildschirm")
+    precondition(gone,"Then it leaves the screen")
     precondition(!view.christmasScene.hasSanta)
-    print("Verschwindet das Fenster unter dem Gespann, hebt es sofort ab und fliegt sauber aus dem Bild")
+    print("If the window under the team disappears, it lifts off immediately and flies cleanly off screen")
 }
 testSleighLeavesWhenWindowGoes()
 
@@ -1855,7 +1855,7 @@ func testRudolphVisit() {
     for _ in 0..<13000 {
         view.step(1/120)
         guard let phase=view.christmasScene.reindeerPhase,let point=view.christmasScene.reindeerPoint else {
-            // Nach dem ersten Besuch aufhören, sonst zählt der nächste mit.
+            // Stop after the first visit, otherwise the next one is counted too.
             if seen.contains(.climb) { break }
             continue
         }
@@ -1867,7 +1867,7 @@ func testRudolphVisit() {
             flewIn = flewIn || point.y>lip+18
             sawSparkles = sawSparkles || view.christmasScene.reindeerSparkles>0
         case .stand:
-            precondition(abs(point.y-lip)<0.6,"Im Stand steht er auf der Fensterkante")
+            precondition(abs(point.y-lip)<0.6,"At rest he stands on the window edge")
             standSeconds+=1/120
             standX=point.x
             sawLook = sawLook || view.christmasScene.reindeerHeadTurn>0.9
@@ -1879,33 +1879,33 @@ func testRudolphVisit() {
         case .land: break
         }
     }
-    // Ein tollpatschiger Besuch läuft mehrmals an: arrive, land, stand, dann
-    // beliebig viele runup/leap/flop-Runden und am Ende climb.
-    precondition(Array(seen.prefix(3))==[.arrive,.land,.stand],"Anfang: \(seen)")
-    precondition(seen.last == .climb,"Zuletzt steigt er weg: \(seen)")
-    precondition(seen.dropFirst(3).dropLast().allSatisfy { [.runup,.leap,.flop].contains($0) },"Ablauf: \(seen)")
+    // A clumsy visit takes several run-ups: arrive, land, stand, then
+    // any number of runup/leap/flop rounds and finally climb.
+    precondition(Array(seen.prefix(3))==[.arrive,.land,.stand],"Start: \(seen)")
+    precondition(seen.last == .climb,"Finally he climbs away: \(seen)")
+    precondition(seen.dropFirst(3).dropLast().allSatisfy { [.runup,.leap,.flop].contains($0) },"Sequence: \(seen)")
     let leaps=seen.filter { $0 == .leap }.count
     if clumsy {
-        precondition(seen.contains(.flop),"Ein tollpatschiger Besuch schafft den Absprung erst nach Fehlversuchen")
-        precondition(leaps>=2,"Er probiert es mehrmals: \(seen)")
+        precondition(seen.contains(.flop),"A clumsy visit only manages the jump after failed attempts")
+        precondition(leaps>=2,"He tries several times: \(seen)")
     } else {
-        precondition(leaps==1 && !seen.contains(.flop),"Ohne Tollpatschigkeit klappt es im ersten Anlauf")
+        precondition(leaps==1 && !seen.contains(.flop),"Without clumsiness it works on the first run-up")
     }
-    precondition(flewIn,"Rudolph muss einfliegen, nicht auf der Kante erscheinen")
-    precondition(sawSparkles,"An den Hufen glitzert Goldstaub")
-    precondition(sawLook,"Im Stand dreht er den Kopf nach vorn")
-    precondition(standSeconds>8.5 && standSeconds<12,"Er bleibt rund zehn Sekunden: \(standSeconds)")
-    precondition(abs(runupX-standX)>24,"Vor dem Absprung nimmt er Anlauf: \(standX) → \(runupX)")
-    precondition(leapHeight>30,"Er springt sichtbar über die Kante: \(leapHeight)")
+    precondition(flewIn,"Rudolph must fly in, not appear on the edge")
+    precondition(sawSparkles,"Gold dust sparkles at the hooves")
+    precondition(sawLook,"At rest he turns his head to the front")
+    precondition(standSeconds>8.5 && standSeconds<12,"He stays about ten seconds: \(standSeconds)")
+    precondition(abs(runupX-standX)>24,"Before the jump he takes a run-up: \(standX) → \(runupX)")
+    precondition(leapHeight>30,"He visibly jumps over the edge: \(leapHeight)")
     let mass=view.ground.reduce(0,+)+view.flakes.reduce(0,{$0+$1.looseSnow})
-    precondition(mass==0,"Rudolph erzeugt keinen Schnee")
-    print("Rudolph: Einflug mit Goldstaub, Landung, Stehen mit Blick nach vorn, Anlauf, Absprung — tollpatschig erst nach mehreren Fehlversuchen")
+    precondition(mass==0,"Rudolph creates no snow")
+    print("Rudolph: fly-in with gold dust, landing, standing facing forwards, run-up, jump — when clumsy, only after several failed attempts")
 }
 testRudolphVisit()
 
 func testRudolphComesBack() {
-    // Sicherung gegen den Fehler, dass der Besuch nie endet, solange noch
-    // Glitzer in der Luft hängt: dann käme nie wieder ein Rentier.
+    // Guards against the bug where the visit never ends while sparkles are
+    // still in the air: then no reindeer would ever come again.
     let view=SnowView(frame:CGRect(x:0,y:0,width:900,height:520))
     view.density=0;view.plowEnabled=false;view.workshopEnabled=false;view.christmas=true
     view.syncWindows([(8,CGRect(x:120,y:40,width:620,height:150))],existingWindows:[8])
@@ -1918,15 +1918,14 @@ func testRudolphComesBack() {
         present=here
         if visits>=2 && !present { break }
     }
-    precondition(visits>=2,"Nach dem ersten Besuch muss ein zweiter kommen: \(visits)")
-    print("Rudolphs Besuch endet sauber und wiederholt sich")
+    precondition(visits>=2,"After the first visit a second one must come: \(visits)")
+    print("Rudolph's visit ends cleanly and repeats")
 }
 testRudolphComesBack()
 
 func testOnlyOneRudolph() {
-    // Rudolph zieht den Schlitten an der Spitze. Solange der Schlitten
-    // unterwegs ist, darf er nicht zusätzlich allein auf einem Fenster stehen,
-    // und umgekehrt.
+    // Rudolph pulls the sleigh at the front. While the sleigh is out, he must
+    // not also stand alone on a window, and vice versa.
     let view=SnowView(frame:CGRect(x:0,y:0,width:900,height:520))
     view.density=0;view.plowEnabled=false;view.workshopEnabled=false;view.christmas=true
     view.syncWindows([(8,CGRect(x:120,y:40,width:620,height:150))],existingWindows:[8])
@@ -1936,17 +1935,17 @@ func testOnlyOneRudolph() {
         view.step(1/120)
         let sleigh=view.christmasScene.sleighPhase != nil
         let alone=view.christmasScene.hasReindeer
-        precondition(!(sleigh && alone),"Rudolph darf nicht gleichzeitig allein und vor dem Schlitten sein")
+        precondition(!(sleigh && alone),"Rudolph must not be alone and in front of the sleigh at the same time")
         sleighSeen = sleighSeen || sleigh
         rudolphSeen = rudolphSeen || alone
     }
-    precondition(sleighSeen || rudolphSeen,"In zwölf Minuten muss mindestens einer der beiden kommen")
-    print("Nur ein Rudolph: nie allein auf dem Fenster, während er den Schlitten zieht")
+    precondition(sleighSeen || rudolphSeen,"Within twelve minutes at least one of the two must come")
+    print("Only one Rudolph: never alone on the window while he pulls the sleigh")
 }
 testOnlyOneRudolph()
 
 func testPondIsVisible() {
-    // Der Eisweiher lag bis 1.72 unsichtbar hinter den vorderen Chalets.
+    // Until 1.72 the ice pond was hidden behind the front chalets.
     for size in [CGSize(width: 1512, height: 982), CGSize(width: 1440, height: 900), CGSize(width: 2560, height: 1440),
                  CGSize(width: 1280, height: 800)] {
         let layout = AdventLayout.make(in: CGRect(origin: .zero, size: size))
@@ -1954,25 +1953,25 @@ func testPondIsVisible() {
             let eaves = chalet.base.width * 0.4
             let house = CGRect(x: chalet.base.minX - eaves, y: chalet.base.minY,
                                width: chalet.base.width + eaves * 2, height: chalet.base.height + chalet.roof * 1.6)
-            precondition(!house.intersects(layout.lake), "Ein Chalet verdeckt den Weiher bei \(size)")
+            precondition(!house.intersects(layout.lake), "A chalet hides the pond at \(size)")
         }
-        precondition(layout.bounds.contains(layout.lake), "Der Weiher muss im Bild liegen bei \(size)")
+        precondition(layout.bounds.contains(layout.lake), "The pond must be on screen at \(size)")
     }
-    print("Der Eisweiher liegt frei im Bild, bei vier Bildschirmgrößen")
+    print("The ice pond is in clear view, at four screen sizes")
 }
 testPondIsVisible()
 
 func testDoorsShowBeforeAdvent() {
-    // Im November waren die Türchen bis 1.74 gar nicht zu sehen. Sie müssen
-    // immer im Tal stehen, geschlossen und mit Nummernschild.
+    // Until 1.74 the doors were not visible at all in November. They must
+    // always stand in the valley, closed and with a number plaque.
     let bounds = CGRect(x: 0, y: 0, width: 1512, height: 982)
     let layout = AdventLayout.make(in: bounds)
     var parts = DateComponents(); parts.year = 2026; parts.month = 11; parts.day = 10; parts.hour = 13
     let date = Calendar(identifier: .gregorian).date(from: parts)!
-    let suite = UserDefaults(suiteName: "schneetag.check.november")!
-    suite.removePersistentDomain(forName: "schneetag.check.november")
+    let suite = UserDefaults(suiteName: "snowday.check.november")!
+    suite.removePersistentDomain(forName: "snowday.check.november")
     let season = AdventCalendar(defaults: suite).season(at: date)
-    precondition(!season.inSeason && season.openedCount == 0, "Für diese Prüfung: November, nichts offen")
+    precondition(!season.inSeason && season.openedCount == 0, "For this check: November, nothing open")
     let image = AdventVillage.backdrop(layout, season: season, sky: AdventSky.at(date), scale: 1)!
     let rep = NSBitmapImageRep(cgImage: image)
     var plaques = 0
@@ -1984,17 +1983,17 @@ func testDoorsShowBeforeAdvent() {
         // The cream plaque is warm; snow around it is cool and bluish.
         if colour.redComponent > 0.6, colour.redComponent - colour.blueComponent > 0.05 { plaques += 1 }
     }
-    precondition(plaques >= 22, "Im November müssen die Türschilder zu sehen sein: \(plaques) von 24")
-    print("Türchen stehen auch vor dem Advent im Tal: \(plaques) von 24 Schildern sichtbar")
+    precondition(plaques >= 22, "In November the door plaques must be visible: \(plaques) of 24")
+    print("Doors stand in the valley even before Advent: \(plaques) of 24 plaques visible")
 }
 testDoorsShowBeforeAdvent()
 
 func testDoorTestModeIsSeparate() {
-    // Der Testmodus öffnet Türchen in einem eigenen Kalender; der echte bleibt leer.
-    let real = UserDefaults(suiteName: "schneetag.check.real")!
-    real.removePersistentDomain(forName: "schneetag.check.real")
-    let trial = UserDefaults(suiteName: "schneetag.check.trial")!
-    trial.removePersistentDomain(forName: "schneetag.check.trial")
+    // Test mode opens doors in a separate calendar; the real one stays empty.
+    let real = UserDefaults(suiteName: "snowday.check.real")!
+    real.removePersistentDomain(forName: "snowday.check.real")
+    let trial = UserDefaults(suiteName: "snowday.check.trial")!
+    trial.removePersistentDomain(forName: "snowday.check.trial")
     trial.set(Array(1..<7), forKey: "advent.opened.2026")
     var parts = DateComponents(); parts.year = 2026; parts.month = 12; parts.day = 7; parts.hour = 18
     let view = SnowView(frame: CGRect(x: 0, y: 0, width: 1512, height: 982))
@@ -2002,26 +2001,26 @@ func testDoorTestModeIsSeparate() {
     view.adventCalendar = AdventCalendar(defaults: trial)
     view.adventDate = Calendar(identifier: .gregorian).date(from: parts)
     view.syncWindows([], existingWindows: []); view.step(0); view.step(1 / 120)
-    precondition(view.openAdventDoor(7) == .garland, "Im Test muss Türchen 7 aufgehen")
-    precondition(view.openAdventDoor(8) == nil, "Nur das Türchen des Testtags darf aufgehen")
-    precondition((trial.array(forKey: "advent.opened.2026") as? [Int])?.contains(7) == true, "Testkalender merkt sich 7")
-    precondition(real.array(forKey: "advent.opened.2026") == nil, "Der echte Kalender bleibt unberührt")
-    print("Türchen-Testmodus: eigener Kalender, nur das Türchen des Testtags, echter Kalender unberührt")
+    precondition(view.openAdventDoor(7) == .garland, "In the test, door 7 must open")
+    precondition(view.openAdventDoor(8) == nil, "Only the door of the test day may open")
+    precondition((trial.array(forKey: "advent.opened.2026") as? [Int])?.contains(7) == true, "Test calendar remembers 7")
+    precondition(real.array(forKey: "advent.opened.2026") == nil, "The real calendar stays untouched")
+    print("Door test mode: separate calendar, only the door of the test day, real calendar untouched")
 }
 testDoorTestModeIsSeparate()
 
 func testNoDoorBehindAHouse() {
-    // Bis 1.87 lagen Türchen hinter näheren Häusern und wurden über deren
-    // Wand gezeichnet (die 3 klebte auf dem Chalet mit der 17).
+    // Until 1.87 doors sat behind nearer houses and were drawn over their
+    // walls (the 3 was stuck on the chalet with the 17).
     for size in [CGSize(width: 1512, height: 982), CGSize(width: 1440, height: 900), CGSize(width: 2560, height: 1440),
                  CGSize(width: 1280, height: 800), CGSize(width: 1728, height: 1117),
                  CGSize(width: 1920, height: 1080), CGSize(width: 1366, height: 768)] {
         let layout = AdventLayout.make(in: CGRect(origin: .zero, size: size))
-        precondition(Set(layout.doors.map(\.day)) == Set(1...24), "Alle 24 Türchen bei \(size)")
+        precondition(Set(layout.doors.map(\.day)) == Set(1...24), "All 24 doors at \(size)")
         let hidden = layout.doors.filter { AdventLayout.doorIsHidden($0, in: layout) }.map(\.day)
-        precondition(hidden.isEmpty, "Verdeckte Türchen bei \(size): \(hidden)")
+        precondition(hidden.isEmpty, "Hidden doors at \(size): \(hidden)")
     }
-    print("Kein Türchen hinter Häusern, Tannen, Dorfbaum oder Laternen, bei sieben Bildschirmgrößen")
+    print("No door behind houses, fir trees, the village tree or lanterns, at seven screen sizes")
 }
 testNoDoorBehindAHouse()
 
@@ -2035,17 +2034,17 @@ func testRudolphLeavesWithTheWindow() {
         view.step(1/120)
         if view.christmasScene.reindeerPhase == .stand { standing=true;break }
     }
-    precondition(standing,"Für diese Prüfung muss er erst stehen")
+    precondition(standing,"For this check he must be standing first")
     view.syncWindows([],existingWindows:[8])
     view.step(1/120)
-    precondition(view.christmasScene.reindeerPhase == .leap,"Fällt die Kante weg, springt er sofort ab")
+    precondition(view.christmasScene.reindeerPhase == .leap,"If the edge goes away, he jumps off immediately")
     var gone=false
     for _ in 0..<2400 {
         view.step(1/120)
         if !view.christmasScene.hasReindeer { gone=true;break }
     }
-    precondition(gone,"Danach verlässt er den Bildschirm")
-    print("Verschwindet die Fensterkante unter Rudolph, springt er ab und fliegt davon")
+    precondition(gone,"Then he leaves the screen")
+    print("If the window edge under Rudolph disappears, he jumps off and flies away")
 }
 testRudolphLeavesWithTheWindow()
 
@@ -2062,37 +2061,37 @@ func december(_ day:Int,_ year:Int=2026) -> Date {
 }
 
 func testAdventCalendarRules() {
-    let name="schneetag.test.advent"
+    let name="snowday.test.advent"
     let calendar=AdventCalendar(defaults:adventSuite(name,[]))
     defer { UserDefaults().removePersistentDomain(forName:name) }
     var parts=DateComponents();parts.year=2026;parts.month=11;parts.day=20;parts.hour=12
     var gregorian=Calendar(identifier:.gregorian);gregorian.timeZone = .current
     let november=gregorian.date(from:parts)!
-    precondition(calendar.season(at:november).today == nil,"Im November ist kein Türchen dran")
-    precondition(calendar.open(1,at:november) == nil,"Vor Dezember lässt sich nichts öffnen")
+    precondition(calendar.season(at:november).today == nil,"In November no door is due")
+    precondition(calendar.open(1,at:november) == nil,"Nothing can be opened before December")
 
     precondition(calendar.season(at:december(5)).today == 5)
-    precondition(calendar.open(6,at:december(5)) == nil,"Ein späteres Türchen bleibt zu")
-    precondition(calendar.open(4,at:december(5)) == nil,"Ein verpasstes Türchen bleibt ebenfalls zu")
-    precondition(calendar.open(5,at:december(5)) == .smoke,"Am 5. gibt es den Rauch")
-    precondition(calendar.open(5,at:december(5)) == nil,"Zweimal öffnen geht nicht")
+    precondition(calendar.open(6,at:december(5)) == nil,"A later door stays closed")
+    precondition(calendar.open(4,at:december(5)) == nil,"A missed door also stays closed")
+    precondition(calendar.open(5,at:december(5)) == .smoke,"On the 5th you get the smoke")
+    precondition(calendar.open(5,at:december(5)) == nil,"Opening twice is not possible")
     precondition(calendar.season(at:december(5)).isOpen(5))
-    precondition(calendar.season(at:december(6)).isOpen(5),"Geöffnete Türchen bleiben offen")
-    precondition(!calendar.season(at:december(6,2027)).isOpen(5),"Die nächste Saison fängt neu an")
+    precondition(calendar.season(at:december(6)).isOpen(5),"Opened doors stay open")
+    precondition(!calendar.season(at:december(6,2027)).isOpen(5),"The next season starts fresh")
 
     let full=AdventCalendar(defaults:adventSuite(name+".full",Array(1...24)))
     defer { UserDefaults().removePersistentDomain(forName:name+".full") }
     let season=full.season(at:december(24))
     precondition(season.warmth==1 && season.has(.rudolph) && season.has(.sleigh) && season.has(.aurora))
     precondition(AdventGift.forDay(6) == .rudolph && AdventGift.forDay(23) == .sleigh)
-    for day in 1...24 { precondition(AdventGift.forDay(day) != .warmth, "Türchen \(day) bringt ein echtes Geschenk") }
-    precondition(Set((1...24).map { AdventGift.forDay($0).title }).count == 24, "24 verschiedene Geschenke")
-    print("Adventskalender: nur das Türchen von heute, einmal, bleibt offen, neue Saison fängt neu an")
+    for day in 1...24 { precondition(AdventGift.forDay(day) != .warmth, "Door \(day) brings a real gift") }
+    precondition(Set((1...24).map { AdventGift.forDay($0).title }).count == 24, "24 different gifts")
+    print("Advent calendar: only today's door, once, stays open, new season starts fresh")
 }
 testAdventCalendarRules()
 
 func testAdventDoorsOnScreen() {
-    let name="schneetag.test.doors"
+    let name="snowday.test.doors"
     let view=SnowView(frame:CGRect(x:0,y:0,width:1000,height:700))
     view.density=0;view.plowEnabled=false;view.workshopEnabled=false
     view.adventCalendar=AdventCalendar(defaults:adventSuite(name,Array(1...13)))
@@ -2101,38 +2100,38 @@ func testAdventDoorsOnScreen() {
     view.christmas=true
     view.syncWindows([],existingWindows:[])
     view.step(0)
-    precondition(view.villageBounds==view.bounds,"Das Tal füllt den ganzen Hintergrund")
+    precondition(view.villageBounds==view.bounds,"The valley fills the whole background")
     var today:CGPoint?
     var others:[CGPoint]=[]
     for day in 1...24 {
-        guard let point=view.adventDoorCenter(day) else { preconditionFailure("Türchen \(day) fehlt") }
-        precondition(view.bounds.insetBy(dx:-1,dy:-1).contains(point),"Türchen \(day) liegt im Bild")
+        guard let point=view.adventDoorCenter(day) else { preconditionFailure("Door \(day) is missing") }
+        precondition(view.bounds.insetBy(dx:-1,dy:-1).contains(point),"Door \(day) is on screen")
         for other in others {
-            precondition(hypot(other.x-point.x,other.y-point.y)>6,"Türchen dürfen nicht übereinander liegen")
+            precondition(hypot(other.x-point.x,other.y-point.y)>6,"Doors must not overlap")
         }
         if day==14 { today=point } else { others.append(point) }
     }
-    guard let today else { preconditionFailure("Türchen 14 fehlt") }
-    precondition(view.adventDoor(at:today)==14,"Das Türchen von heute nimmt den Klick an")
+    guard let today else { preconditionFailure("Door 14 is missing") }
+    precondition(view.adventDoor(at:today)==14,"Today's door accepts the click")
     precondition(view.wantsInteraction(at:today))
-    for point in others { precondition(view.adventDoor(at:point)==nil,"Andere Türchen bleiben durchlässig") }
+    for point in others { precondition(view.adventDoor(at:point)==nil,"Other doors stay click-through") }
     precondition(view.advent.openedCount==13)
     precondition(view.openAdventDoor(14) == .market)
     precondition(view.advent.openedCount==14 && view.advent.isOpen(14))
-    precondition(view.adventDoor(at:today)==nil,"Ein geöffnetes Türchen nimmt keine Klicks mehr")
+    precondition(view.adventDoor(at:today)==nil,"An opened door no longer accepts clicks")
     precondition(view.openAdventDoor(14) == nil)
-    // Außerhalb des Weihnachtsmodus bleibt das Dorf aus.
+    // Outside Christmas mode the village stays off.
     view.christmas=false
     precondition(view.adventDoor(at:today)==nil)
-    // Die Straßenbeleuchtung wächst mit jedem Türchen.
+    // The street lighting grows with every door.
     let layout=AdventLayout.make(in:CGRect(x:0,y:0,width:1400,height:900))
     let lamps=layout.roads.reduce(0) { $0+$1.lamps.count }
-    precondition(lamps>=20,"Es gibt genug Laternen für eine sichtbare Staffelung: \(lamps)")
+    precondition(lamps>=20,"There are enough lanterns for a visible progression: \(lamps)")
     precondition(layout.litLamps(warmth:0)==0 && layout.litLamps(warmth:1)==lamps)
     var previous = -1
     for opened in 0...24 {
         let burning=layout.litLamps(warmth:CGFloat(opened)/24)
-        precondition(burning>=previous,"Die Beleuchtung darf nie wieder ausgehen")
+        precondition(burning>=previous,"The lighting must never go out again")
         previous=burning
     }
     for hour in [3, 8, 13, 17, 21] {
@@ -2140,9 +2139,9 @@ func testAdventDoorsOnScreen() {
         var gregorian=Calendar(identifier:.gregorian);gregorian.timeZone = .current
         let sky=AdventSky.at(gregorian.date(from:parts)!)
         precondition(AdventVillage.backdrop(layout,season:AdventSeason(year:2026,today:14,opened:Set(1...13)),
-                                            sky:sky,scale:1) != nil,"Der Hintergrund rendert um \(hour) Uhr")
+                                            sky:sky,scale:1) != nil,"The background renders at \(hour):00")
     }
-    print("24 Türchen im ganzen Tal, nur das heutige ist anklickbar, Beleuchtung wächst mit jedem Türchen")
+    print("24 doors across the whole valley, only today's is clickable, lighting grows with every door")
 }
 testAdventDoorsOnScreen()
 
@@ -2154,15 +2153,15 @@ func testAdventUnlocksVisitors() {
         var parts=DateComponents();parts.year=2026;parts.month=11;parts.day=13;parts.hour=15
         let view=SnowView(frame:CGRect(x:0,y:0,width:900,height:560))
         view.density=0;view.plowEnabled=false;view.workshopEnabled=false
-        view.adventCalendar=AdventCalendar(defaults:adventSuite("schneetag.test.november",[]))
+        view.adventCalendar=AdventCalendar(defaults:adventSuite("snowday.test.november",[]))
         view.adventDate=Calendar(identifier:.gregorian).date(from:parts)
         view.christmas=true
         view.syncWindows([(3,CGRect(x:120,y:40,width:620,height:150))],existingWindows:[3])
         view.step(0);view.inviteChristmasMoment()
         var saw=false
         for _ in 0..<9000 { view.step(1/120); saw = saw || view.christmasScene.hasSanta || view.christmasScene.hasReindeer }
-        UserDefaults().removePersistentDomain(forName:"schneetag.test.november")
-        precondition(!saw,"Im November fliegen weder Rudolph noch der Weihnachtsmann")
+        UserDefaults().removePersistentDomain(forName:"snowday.test.november")
+        precondition(!saw,"In November neither Rudolph nor Santa flies")
     }
     func scene(_ name:String,_ opened:[Int],_ day:Int) -> SnowView {
         let view=SnowView(frame:CGRect(x:0,y:0,width:900,height:560))
@@ -2174,28 +2173,28 @@ func testAdventUnlocksVisitors() {
         view.step(0);view.inviteChristmasMoment()
         return view
     }
-    let locked=scene("schneetag.test.locked",[1,2],2)
-    defer { UserDefaults().removePersistentDomain(forName:"schneetag.test.locked") }
+    let locked=scene("snowday.test.locked",[1,2],2)
+    defer { UserDefaults().removePersistentDomain(forName:"snowday.test.locked") }
     var sawAny=false
     for _ in 0..<9000 {
         locked.step(1/120)
         sawAny = sawAny || locked.christmasScene.hasSanta || locked.christmasScene.hasReindeer
     }
-    precondition(!sawAny,"Ohne die passenden Türchen bleibt der Besuch aus")
+    precondition(!sawAny,"Without the matching doors there is no visit")
 
     // From St Nicholas' Day Rudolph comes, the sleigh not yet.
-    let nikolaus=scene("schneetag.test.nikolaus",Array(1...6),6)
-    defer { UserDefaults().removePersistentDomain(forName:"schneetag.test.nikolaus") }
+    let stNicholas=scene("snowday.test.nikolaus",Array(1...6),6)
+    defer { UserDefaults().removePersistentDomain(forName:"snowday.test.nikolaus") }
     var deerEarly=false,sleighEarly=false
     for _ in 0..<9000 {
-        nikolaus.step(1/120)
-        deerEarly = deerEarly || nikolaus.christmasScene.hasReindeer
-        sleighEarly = sleighEarly || nikolaus.christmasScene.hasSanta
+        stNicholas.step(1/120)
+        deerEarly = deerEarly || stNicholas.christmasScene.hasReindeer
+        sleighEarly = sleighEarly || stNicholas.christmasScene.hasSanta
     }
-    precondition(deerEarly && !sleighEarly,"Ab Türchen 6 kommt Rudolph, der Weihnachtsmann erst ab Türchen 23")
+    precondition(deerEarly && !sleighEarly,"From door 6 Rudolph comes, Santa only from door 23")
 
-    let open=scene("schneetag.test.unlocked",Array(1...23),23)
-    defer { UserDefaults().removePersistentDomain(forName:"schneetag.test.unlocked") }
+    let open=scene("snowday.test.unlocked",Array(1...23),23)
+    defer { UserDefaults().removePersistentDomain(forName:"snowday.test.unlocked") }
     var sawDeer=false,sawSleigh=false
     for _ in 0..<9000 {
         open.step(1/120)
@@ -2203,14 +2202,14 @@ func testAdventUnlocksVisitors() {
         sawSleigh = sawSleigh || open.christmasScene.hasSanta
         if sawDeer && sawSleigh { break }
     }
-    precondition(sawDeer && sawSleigh,"Mit Türchen 6 und 23 kommen Rudolph und der Schlitten")
-    print("Rudolph und der Schlitten hängen an ihren Türchen; davor bleibt es im Dorf ruhig")
+    precondition(sawDeer && sawSleigh,"With doors 6 and 23, Rudolph and the sleigh come")
+    print("Rudolph and the sleigh depend on their doors; before that the village stays quiet")
 }
 testAdventUnlocksVisitors()
 
 func testDesktopWidgetsStayVisible() {
-    // Über Widgets schneit es, das Tal bleibt dort aber ausgespart.
-    // Liegt ein Fenster halb über einem Widget, bleibt das Fenster ganz frei.
+    // It snows over widgets, but the valley is left out there.
+    // If a window lies half over a widget, the window stays completely clear.
     let view=SnowView(frame:CGRect(x:0,y:0,width:900,height:560))
     view.density=0;view.plowEnabled=false;view.workshopEnabled=false;view.christmas=true
     let widget=CGRect(x:20,y:340,width:180,height:180)
@@ -2218,14 +2217,14 @@ func testDesktopWidgetsStayVisible() {
     view.syncWindows([(7,window)],widgets:[widget],existingWindows:[7])
     view.step(0)
     let inWidget=CGPoint(x:60,y:480), overlap=CGPoint(x:160,y:400)
-    precondition(view.isVisible(inWidget),"Im Widget darf es schneien")
-    precondition(!view.isVillageVisible(inWidget),"Im Widget wird kein Tal gemalt")
-    precondition(!view.isVisible(overlap),"Wo das Fenster über dem Widget liegt, schneit es nicht")
-    precondition(!view.isVillageVisible(overlap),"Und dort ist auch kein Tal")
-    precondition(view.isVisible(CGPoint(x:700,y:400)) && view.isVillageVisible(CGPoint(x:700,y:400)),"Daneben beides")
+    precondition(view.isVisible(inWidget),"It may snow inside the widget")
+    precondition(!view.isVillageVisible(inWidget),"No valley is painted inside the widget")
+    precondition(!view.isVisible(overlap),"Where the window lies over the widget, it does not snow")
+    precondition(!view.isVillageVisible(overlap),"And there is no valley there either")
+    precondition(view.isVisible(CGPoint(x:700,y:400)) && view.isVillageVisible(CGPoint(x:700,y:400)),"Next to it, both")
     view.syncWindows([(7,window)],widgets:[],existingWindows:[7])
-    precondition(view.isVillageVisible(inWidget),"Ohne Widget wird die Stelle wieder bemalt")
-    print("Über Schreibtisch-Widgets schneit es, das Tal bleibt dort frei; Fenster darüber bleiben ganz frei")
+    precondition(view.isVillageVisible(inWidget),"Without the widget the spot is painted again")
+    print("It snows over desktop widgets, the valley stays clear there; windows above them stay completely clear")
 }
 testDesktopWidgetsStayVisible()
 
@@ -2243,35 +2242,35 @@ func testGroundSnowInFrontOfDock() {
         return rep.colorAt(x:Int(p.x*scale),y:rep.pixelsHigh-1-Int(p.y*scale))!.alphaComponent
     }
     let inStrip=CGPoint(x:450,y:12), above=CGPoint(x:450,y:120)
-    precondition(alpha(view,at:inStrip)>0.5,"Ohne Dock-Vorderfenster liegt der Bodenschnee wie bisher im Hauptfenster")
+    precondition(alpha(view,at:inStrip)>0.5,"Without the Dock front window, ground snow lies in the main window as before")
     let front=DockFrontView(frame:view.bounds)
     front.snow=view
     view.dockView=front
-    precondition(alpha(view,at:inStrip)<0.01,"Im Dock-Streifen spart das Hauptfenster den Bodenschnee aus")
-    precondition(alpha(front,at:inStrip)>0.5,"Das Fenster vor dem Dock zeigt dort den Bodenschnee")
-    precondition(alpha(front,at:above)<0.01,"Oberhalb des Docks zeichnet das Vorderfenster nichts")
+    precondition(alpha(view,at:inStrip)<0.01,"In the Dock strip the main window leaves out the ground snow")
+    precondition(alpha(front,at:inStrip)>0.5,"The window in front of the Dock shows the ground snow there")
+    precondition(alpha(front,at:above)<0.01,"Above the Dock the front window draws nothing")
     view.dockView=nil
-    print("Bodenschnee und Räumfahrzeuge liegen vor dem Dock: Hauptfenster spart den Dock-Streifen aus, das Vorderfenster füllt ihn")
+    print("Ground snow and snowplows sit in front of the Dock: the main window leaves out the Dock strip, the front window fills it")
 }
 testGroundSnowInFrontOfDock()
 
 func testEveryDoorInSightAndOwnPresent() {
     let kinds = (1...24).map { AdventVillage.treasureKind($0) }
-    precondition(Set(kinds).count == 24, "Jedes Türchen hat ein eigenes Motiv")
-    precondition(kinds[23] == 2, "Der Stern gehört zum Heiligabend")
+    precondition(Set(kinds).count == 24, "Every door has its own motif")
+    precondition(kinds[23] == 2, "The star belongs to Christmas Eve")
     for size in [CGSize(width: 1512, height: 982), CGSize(width: 1440, height: 900),
                  CGSize(width: 1920, height: 1080), CGSize(width: 2560, height: 1440)] {
         let layout = AdventLayout.make(in: CGRect(origin: .zero, size: size))
         let days = layout.chalets.compactMap { $0.day }
-        precondition(Set(days).count == 24, "Alle 24 Türchen stehen im Dorf (\(size))")
+        precondition(Set(days).count == 24, "All 24 doors stand in the village (\(size))")
         for house in layout.chalets {
             guard let day = house.day else { continue }
             let area = AdventLayout.doorArea(house)
             let blocked = layout.chalets.contains { $0.depth > house.depth && AdventLayout.covers($0, area) }
-            precondition(!blocked, "Türchen \(day) liegt hinter einem näheren Haus oder dessen Dachschnee (\(size))")
+            precondition(!blocked, "Door \(day) is behind a nearer house or its roof snow (\(size))")
         }
     }
-    print("Alle 24 Türchen frei sichtbar, auch hinter Dachschnee, bei vier Bildschirmgrößen; 24 verschiedene Motive")
+    print("All 24 doors clearly visible, even behind roof snow, at four screen sizes; 24 different motifs")
 }
 testEveryDoorInSightAndOwnPresent()
 
@@ -2280,53 +2279,53 @@ func testHorseSleighBelongsToDoorOne() {
     var closed = AdventSeason(); closed.year = 2026; closed.today = 1
     var opened = closed; opened.opened = [1]
     AdventVillage.roadShift = 0
-    precondition(AdventGift.forDay(1) == .horseSleigh, "Türchen 1 bringt den Pferdeschlitten")
+    precondition(AdventGift.forDay(1) == .horseSleigh, "Door 1 brings the horse-drawn sleigh")
     for time in stride(from: CGFloat(0), to: 280, by: 3.5) {
         let road = AdventVillage.roadTraffic(season: closed, time: time)
-        precondition(road.sleigh == nil, "Vor Türchen 1 fährt kein Pferdeschlitten (t=\(time))")
+        precondition(road.sleigh == nil, "Before door 1 no horse-drawn sleigh runs (t=\(time))")
     }
     // The tractor has its own door, 2.
     precondition(AdventVillage.roadTraffic(season: closed, time: 100).tractor == nil)
     var withTractor = opened; withTractor.opened = [1, 2]
     precondition(AdventVillage.roadTraffic(season: withTractor, time: 100).tractor != nil)
-    precondition(AdventVillage.roadTraffic(season: opened, time: 20).sleigh != nil, "Nach Türchen 1 fährt der Schlitten")
+    precondition(AdventVillage.roadTraffic(season: opened, time: 20).sleigh != nil, "After door 1 the sleigh runs")
     // Opened while the road waits: the sleigh sets off at once from the edge.
     AdventVillage.cueHorseSleigh(at: 40)
     let now = AdventVillage.roadTraffic(season: opened, time: 40)
-    precondition(now.sleigh != nil && now.sleigh!.t < 0.001, "Der Schlitten startet sofort nach dem Öffnen")
+    precondition(now.sleigh != nil && now.sleigh!.t < 0.001, "The sleigh starts right after opening")
     // Opened while the tractor is out: it is not cut short.
     AdventVillage.roadShift = 0
     let before = AdventVillage.roadTraffic(season: withTractor, time: 100).tractor
     AdventVillage.cueHorseSleigh(at: 100)
     let after = AdventVillage.roadTraffic(season: withTractor, time: 100).tractor
-    precondition(before != nil && after != nil && abs(before!.t - after!.t) < 0.0001, "Ein fahrender Traktor wird nicht abgeschnitten")
+    precondition(before != nil && after != nil && abs(before!.t - after!.t) < 0.0001, "A moving tractor is not cut short")
     AdventVillage.roadShift = 0
-    print("Pferdeschlitten gehört zu Türchen 1: vorher nur der Traktor, beim Öffnen fährt der Schlitten sofort los")
+    print("Horse-drawn sleigh belongs to door 1: before that only the tractor, on opening the sleigh sets off at once")
 }
 testHorseSleighBelongsToDoorOne()
 
 func testAllDoorsTestMode() {
-    let suite = adventSuite("schneetag.test.alldoors", [])
-    defer { UserDefaults().removePersistentDomain(forName: "schneetag.test.alldoors") }
+    let suite = adventSuite("snowday.test.alldoors", [])
+    defer { UserDefaults().removePersistentDomain(forName: "snowday.test.alldoors") }
     let normal = AdventCalendar(defaults: suite)
-    precondition(!normal.season(at: december(5)).canOpen(9), "Normal ist nur das heutige Türchen offen")
+    precondition(!normal.season(at: december(5)).canOpen(9), "Normally only today's door is open")
     let all = AdventCalendar(defaults: suite, anyDay: true)
-    for day in 1...24 { precondition(all.season(at: december(24)).canOpen(day), "Im Testmodus ist Türchen \(day) anklickbar") }
+    for day in 1...24 { precondition(all.season(at: december(24)).canOpen(day), "In test mode door \(day) is clickable") }
     precondition(all.open(9, at: december(24)) != nil && all.open(1, at: december(24)) == .horseSleigh)
     let state = all.season(at: december(24))
-    precondition(state.isOpen(9) && state.isOpen(1) && !state.canOpen(9) && state.canOpen(10), "Geöffnete bleiben offen, der Rest bleibt anklickbar")
+    precondition(state.isOpen(9) && state.isOpen(1) && !state.canOpen(9) && state.canOpen(10), "Opened ones stay open, the rest stay clickable")
     // The view: a click on any door's rect opens it.
     let view = SnowView(frame: CGRect(x: 0, y: 0, width: 1512, height: 982))
     view.density = 0; view.plowEnabled = false; view.workshopEnabled = false
-    view.adventCalendar = AdventCalendar(defaults: adventSuite("schneetag.test.alldoors2", []), anyDay: true)
-    defer { UserDefaults().removePersistentDomain(forName: "schneetag.test.alldoors2") }
+    view.adventCalendar = AdventCalendar(defaults: adventSuite("snowday.test.alldoors2", []), anyDay: true)
+    defer { UserDefaults().removePersistentDomain(forName: "snowday.test.alldoors2") }
     view.adventDate = december(24)
     view.christmas = true
     view.syncWindows([], existingWindows: [])
     view.step(0)
     let layout = AdventLayout.make(in: view.bounds)
-    for door in layout.doors { precondition(view.adventDoor(at: CGPoint(x: door.rect.midX, y: door.rect.midY)) == door.day, "Klick trifft Türchen \(door.day)") }
-    print("Testmodus: alle 24 Türchen gleichzeitig anklickbar, echter Kalender unberührt")
+    for door in layout.doors { precondition(view.adventDoor(at: CGPoint(x: door.rect.midX, y: door.rect.midY)) == door.day, "Click hits door \(door.day)") }
+    print("Test mode: all 24 doors clickable at once, real calendar untouched")
 }
 testAllDoorsTestMode()
 
@@ -2343,15 +2342,15 @@ func testVignetteOnEveryMonitor() {
     let laptop = edge(3024, 1964)
     for (width, height) in [(3840, 2160), (5120, 2160), (6880, 2880), (7680, 2160)] {
         let side = edge(width, height)
-        precondition(abs(Int(side) - Int(laptop)) <= 6, "Rand bei \(width)×\(height): \(side) statt etwa \(laptop)")
+        precondition(abs(Int(side) - Int(laptop)) <= 6, "Edge at \(width)×\(height): \(side) instead of about \(laptop)")
     }
-    print("Vignette auf jedem Monitor gleich: Seitenrand bleibt hell wie am MacBook, auch bei Ultrawide")
+    print("Vignette the same on every monitor: side edge stays as bright as on a MacBook, even on ultrawide")
 }
 testVignetteOnEveryMonitor()
 
 func testSmokeStampLooksLikeGradient() {
-    // Ein Rauchwölkchen als Stempel muss aussehen wie der frühere Verlauf:
-    // gleiche Farbe, gleiche Ausdehnung, gleicher weicher Rand.
+    // A puff of smoke as a stamp must look like the former gradient:
+    // same color, same extent, same soft edge.
     func render(_ paint: (CGContext) -> Void) -> [UInt8] {
         let ctx = CGContext(data: nil, width: 120, height: 80, bitsPerComponent: 8, bytesPerRow: 480,
                             space: CGColorSpace(name: CGColorSpace.sRGB)!,
@@ -2369,29 +2368,29 @@ func testSmokeStampLooksLikeGradient() {
         var worst = 0, total = 0
         for i in 0..<old.count { let d = abs(Int(old[i]) - Int(new[i])); worst = max(worst, d); total += d }
         let mean = Double(total) / Double(old.count)
-        precondition(worst <= 24 && mean < 1.0, "Rauchstempel r=\(radius): größte Abweichung \(worst), Mittel \(mean)")
+        precondition(worst <= 24 && mean < 1.0, "Smoke stamp r=\(radius): largest deviation \(worst), mean \(mean)")
     }
-    print("Rauch aus Stempeln: sieht aus wie der frühere Verlauf, kostet aber keine Grafikleistung mehr")
+    print("Smoke from stamps: looks like the former gradient but no longer costs graphics performance")
 }
 testSmokeStampLooksLikeGradient()
 
 func testEveryPointerHasAChristmasPicture() {
     let keeper = FestivePointerKeeper()
     let pairs = FestiveCursorArt.festivePairs()
-    precondition(pairs.count >= 17, "Zu wenige Zeiger: \(pairs.count)")
+    precondition(pairs.count >= 17, "Too few pointers: \(pairs.count)")
     for pair in pairs {
         let festive = pair.festive()
         precondition(FestivePointerKeeper.mark(festive) != FestivePointerKeeper.mark(pair.plain),
-                     "Weihnachtsbild muss sich vom Systemzeiger unterscheiden")
+                     "Christmas image must differ from the system pointer")
         precondition(festive.image.size.width > 4 && festive.image.size.height > 4)
     }
-    // Der Textcursor behält seinen Ankerpunkt, damit die Einfügemarke an derselben Stelle sitzt.
+    // The text cursor keeps its hot spot so the insertion point sits in the same place.
     let beam = FestiveCursorArt.candyBeam(like: .iBeam, vertical: false)
     precondition(beam.hotSpot == NSCursor.iBeam.hotSpot && beam.image.size == NSCursor.iBeam.image.size)
-    // Größe ändern: Mitte der Tannen ist der Ankerpunkt.
+    // Resize: the center of the fir trees is the hot spot.
     let trees = FestiveCursorArt.firTrees([90, 270])
     precondition(trees.hotSpot == CGPoint(x: 14, y: 14))
     _ = keeper
-    print("Alle \(pairs.count) Systemzeiger haben ein Weihnachtsbild: Zuckerstangen-Textcursor, Tannen zum Größe-Ändern")
+    print("All \(pairs.count) system pointers have a Christmas image: candy cane text cursor, fir trees for resizing")
 }
 testEveryPointerHasAChristmasPicture()

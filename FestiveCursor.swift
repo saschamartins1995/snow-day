@@ -1,13 +1,13 @@
 import AppKit
 
-/// The pointer Schneetag shows in Christmas mode, picked in the menu.
+/// The pointer Snow Day shows in Christmas mode, picked in the menu.
 enum FestivePointerStyle: String, CaseIterable {
     case candyCane, peppermint, plain
     var title: String {
         switch self {
-        case .candyCane: "Zuckerstange"
-        case .peppermint: "Pfefferminz-Bonbon"
-        case .plain: "Normaler Mauszeiger"
+        case .candyCane: "Candy Cane"
+        case .peppermint: "Peppermint"
+        case .plain: "Standard Pointer"
         }
     }
 }
@@ -230,7 +230,7 @@ extension FestiveCursorArt {
         return NSCursor(image: image, hotSpot: CGPoint(x: side / 2, y: side / 2))
     }
 
-    /// Every system pointer Schneetag dresses up, with its Christmas picture.
+    /// Every system pointer Snow Day dresses up, with its Christmas picture.
     /// The arrow follows the chosen style; everything else is the same for
     /// both festive styles.
     static func festivePairs() -> [(plain: NSCursor, festive: () -> NSCursor)] {
@@ -269,7 +269,7 @@ extension FestiveCursorArt {
 
 /// Shows the Christmas pointers everywhere macOS would show its own: on the
 /// desktop, in the village, over Finder and over other apps' windows.
-/// Schneetag never takes a click for it; it only swaps the picture. macOS
+/// Snow Day never takes a click for it; it only swaps the picture. macOS
 /// lets a background app change the pointer once it says so on its window
 /// server connection. Apps set their pointer again on every mouse movement,
 /// so the swap follows each movement at once, not on a clock.

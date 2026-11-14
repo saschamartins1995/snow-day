@@ -1,5 +1,5 @@
 import AppKit
-// Draws the Schneetag app icon at 1024 × 1024 in the macOS template:
+// Draws the Snow Day app icon at 1024 × 1024 in the macOS template:
 // a rounded square of 824 points with a soft shadow, a winter night with
 // the Matterhorn, snow, falling flakes and a snowman in front.
 let S: CGFloat = 1024

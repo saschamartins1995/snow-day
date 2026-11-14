@@ -469,10 +469,10 @@ enum Scarf: String, Codable, CaseIterable {
 
     var title: String {
         switch self {
-        case .berry: "Beerenrot"
-        case .spruce: "Tannengrün"
-        case .ocean: "Eisblau"
-        case .gold: "Goldgelb"
+        case .berry: "Berry Red"
+        case .spruce: "Fir Green"
+        case .ocean: "Ice Blue"
+        case .gold: "Golden Yellow"
         }
     }
 
@@ -575,7 +575,7 @@ final class SnowView: FestiveCursorSurface {
     /// froze the snow once a minute.
     private var backdropStale = false
     private var backdropBuilding = false
-    private static let backdropQueue = DispatchQueue(label: "schneetag.backdrop", qos: .userInitiated)
+    private static let backdropQueue = DispatchQueue(label: "snowday.backdrop", qos: .userInitiated)
     /// Hands the still valley to the wallpaper window that lies under the
     /// desktop widgets, so translucent widgets show the valley behind them
     /// and not the old desktop picture.
@@ -736,9 +736,9 @@ final class SnowView: FestiveCursorSurface {
     /// What the menu says about today's door.
     var adventStatus: String {
         let season = adventCalendar.season(at: adventDate ?? Date())
-        guard let today = season.today else { return "Die Türchen öffnen ab 1. Dezember" }
-        if season.isOpen(today) { return "Türchen \(today): \(AdventGift.forDay(today).title)" }
-        return "Türchen \(today) wartet im Dorf"
+        guard let today = season.today else { return "The doors open from December 1" }
+        if season.isOpen(today) { return "Door \(today): \(AdventGift.forDay(today).title)" }
+        return "Door \(today) is waiting in the village"
     }
 
     func refreshAdvent(force: Bool = false) {
@@ -824,7 +824,7 @@ final class SnowView: FestiveCursorSurface {
         }
         // The banner: big, at the top of the screen, for all to read.
         let top = (safeArea ?? bounds).maxY
-        let small = NSAttributedString(string: "Türchen \(news.day)", attributes: [
+        let small = NSAttributedString(string: "Door \(news.day)", attributes: [
             .font: NSFont.systemFont(ofSize: 15, weight: .semibold),
             .foregroundColor: NSColor(srgbRed: 0.62, green: 0.18, blue: 0.10, alpha: fade)
         ])
@@ -1978,7 +1978,7 @@ final class SnowView: FestiveCursorSurface {
     }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     /// Frames of the icons lying on the desktop, in view coordinates. A
-    /// click or drag there always belongs to the icon, never to Schneetag.
+    /// click or drag there always belongs to the icon, never to Snow Day.
     var desktopIcons: [CGRect] = []
 
     func wantsInteraction(at point: CGPoint?) -> Bool {
@@ -3068,17 +3068,17 @@ final class SnowView: FestiveCursorSurface {
             drawBallGuide(x: x, y: nextBallY(for: draft), radius: radius,
                           color: covered ? .systemRed : ice, in: ctx)
             if covered {
-                text = "Ein Fenster verdeckt den Bauplatz"
+                text = "A window is covering the building spot"
             } else {
-                text = isBelly ? "2 / 3   ·   Klicke auf die Vorschau für den Bauch" : "3 / 3   ·   Klicke auf die Vorschau für den Kopf"
+                text = isBelly ? "2 / 3   ·   Click the preview to place the body" : "3 / 3   ·   Click the preview to place the head"
             }
         } else if let pointer = buildPointer, pointer.y < buildStripHeight {
             let site = buildSite(at: pointer)
             drawBallGuide(x: site.x, y: floorY + 23, radius: snowmanBaseRadius,
                           color: site.available ? ice : .systemRed, in: ctx)
-            text = site.available ? "1 / 3   ·   Klicken, um die erste Kugel zu setzen" : "1 / 3   ·   Such dir unten einen freien Platz"
+            text = site.available ? "1 / 3   ·   Click to place the first snowball" : "1 / 3   ·   Find a free spot at the bottom"
         } else {
-            text = "1 / 3   ·   Bewege den Cursor an den unteren Bildschirmrand"
+            text = "1 / 3   ·   Move the pointer to the bottom of the screen"
         }
         let label = NSAttributedString(string: text, attributes: [
             .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: NSColor.white
@@ -3154,7 +3154,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
     private var pressPassesThrough: Bool?
     private var lastIconScan: CFTimeInterval = 0
     private var iconScanBusy = false
-    private let iconQueue = DispatchQueue(label: "schneetag.desktop-icons", qos: .utility)
+    private let iconQueue = DispatchQueue(label: "snowday.desktop-icons", qos: .utility)
 
     /// Reads where Finder's desktop icons lie (needs the Accessibility
     /// permission; without it nothing changes) and hands each overlay the
@@ -3214,7 +3214,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
     /// Asks the system directly whether anyone can see the screen. The sleep
     /// and lock notifications only report changes: launched while the
     /// display already slept (an update installed while nobody was there),
-    /// Schneetag never heard about it and drew at full speed into the dark.
+    /// Snow Day never heard about it and drew at full speed into the dark.
     private func checkAway() {
         // Only the running app asks the system; checks that drive the
         // controller by hand (no event loop) must not depend on whether the
@@ -3243,8 +3243,22 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
     var plow = true
     var density: CGFloat = 1
 
+    /// Snow Day was called Schneetag before. Settings, snowmen and opened
+    /// doors saved under the old name come along once, so nobody loses
+    /// their calendar.
+    static func adoptEarlierSettings(into defaults: UserDefaults) {
+        let marker = "adoptedEarlierSettings"
+        guard !defaults.bool(forKey: marker) else { return }
+        defaults.set(true, forKey: marker)
+        guard let earlier = UserDefaults(suiteName: "local.schneetag.mac")?.persistentDomain(forName: "local.schneetag.mac") else { return }
+        for (key, value) in earlier where defaults.object(forKey: key) == nil {
+            defaults.set(value, forKey: key)
+        }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         let defaults = UserDefaults.standard
+        Self.adoptEarlierSettings(into: defaults)
         defaults.register(defaults: ["plow": true, "density": 1.0, "frost": true,
                                      "village": true])
         christmas = defaults.bool(forKey: "christmas")
@@ -3258,26 +3272,26 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = status?.button {
             button.image = SnowmanArt.menuIcon
-            button.setAccessibilityLabel("Schneetag – Schneemänner und Schneeballschlacht")
-            button.toolTip = "Schneetag · Schneemänner & Schneeballschlacht"
+            button.setAccessibilityLabel("Snow Day – snowmen and snowball fights")
+            button.toolTip = "Snow Day · Snowmen & snowball fights"
         }
         refreshMenu()
         rebuild()
         applyPointer()
-        #if SCHNEETAG_DEV
-        // For measuring: SCHNEETAG_TEST_DAY=24 SCHNEETAG_TEST_HOUR=22 starts
+        #if SNOWDAY_DEV
+        // For measuring: SNOWDAY_TEST_DAY=24 SNOWDAY_TEST_HOUR=22 starts
         // straight in door test mode on that day, with every earlier door open.
         let environment = ProcessInfo.processInfo.environment
-        // SCHNEETAG_TEST_ALL=1 starts with every door clickable at once, for
+        // SNOWDAY_TEST_ALL=1 starts with every door clickable at once, for
         // trying the calendar without the menu (which a full menu bar beside
         // the notch can hide).
-        if environment["SCHNEETAG_TEST_ALL"] == "1" {
+        if environment["SNOWDAY_TEST_ALL"] == "1" {
             toggleAllDoorsTest()
         }
-        if let day = environment["SCHNEETAG_TEST_DAY"].flatMap(Int.init), (1...24).contains(day) {
+        if let day = environment["SNOWDAY_TEST_DAY"].flatMap(Int.init), (1...24).contains(day) {
             adventTestDefaults.set(Array(1..<day), forKey: "advent.opened.\(adventTestYear)")
             adventTestDay = day
-            adventTestHour = environment["SCHNEETAG_TEST_HOUR"].flatMap(Int.init)
+            adventTestHour = environment["SNOWDAY_TEST_HOUR"].flatMap(Int.init)
             for layer in overlays { applyAdventTest(to: layer.snow) }
             refreshMenu()
         }
@@ -3343,7 +3357,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
             snow.scarf = scarf
             snow.christmas = christmas
             snow.villageEnabled = village
-            #if SCHNEETAG_DEV
+            #if SNOWDAY_DEV
             applyAdventTest(to: snow)
             #endif
             snow.safeArea = screen.visibleFrame.offsetBy(dx: -screen.frame.minX, dy: -screen.frame.minY)
@@ -3373,7 +3387,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
 
     /// While nobody can see the screen, a slow check keeps asking whether
     /// that is still so. The wake and unlock notifications can arrive while
-    /// the system still reports the old state; without this Schneetag would
+    /// the system still reports the old state; without this Snow Day would
     /// stay hidden until it is restarted.
     private var awayWatch: Timer?
 
@@ -3456,7 +3470,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
             scanWindows(interval: interval)
             updateTimer()
         }
-        // A press that began outside Schneetag (dragging a desktop icon, a
+        // A press that began outside Snow Day (dragging a desktop icon, a
         // file, a rubber band) passes straight through until it is let go,
         // so it can be dropped on a door or a snow pile like anywhere else.
         let mouse = NSEvent.mouseLocation
@@ -3521,7 +3535,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
         }
         // Thirty times a second only the windows on screen are listed: the
         // full list of every window of every app, hidden ones included, runs
-        // to hundreds and cost a seventh of all Schneetag did. It is only
+        // to hundreds and cost a seventh of all Snow Day did. It is only
         // needed to tell a closed window (its snow falls) from a hidden one
         // (its snow waits), so it is fetched when a window vanishes from the
         // screen, and every two seconds besides.
@@ -3638,45 +3652,45 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
     func refreshMenu() {
         let menu = NSMenu()
         menu.delegate=self
-        let heading = NSMenuItem(title: "Schneetag", action: nil, keyEquivalent: "")
+        let heading = NSMenuItem(title: "Snow Day", action: nil, keyEquivalent: "")
         menu.addItem(heading)
-        add(menu, "Steuerung öffnen …", #selector(showControls))
+        add(menu, "Open Controls…", #selector(showControls))
         menu.addItem(.separator())
-        add(menu, paused ? "Schnee fortsetzen" : "Schnee pausieren", #selector(togglePause))
-        let intensity = NSMenuItem(title: "Schneefall", action: nil, keyEquivalent: "")
+        add(menu, paused ? "Resume Snow" : "Pause Snow", #selector(togglePause))
+        let intensity = NSMenuItem(title: "Snowfall", action: nil, keyEquivalent: "")
         let choices = NSMenu()
-        for (label, value) in [("Leicht", 0.5), ("Normal", 1.0), ("Dicht", 1.65)] {
+        for (label, value) in [("Light", 0.5), ("Normal", 1.0), ("Heavy", 1.65)] {
             let item = add(choices, label, #selector(changeDensity(_:)))
             item.representedObject = value
             item.state = density == value ? .on : .off
         }
         intensity.submenu = choices
         menu.addItem(intensity)
-        add(menu, "Schneepflug", #selector(togglePlow)).state = plow ? .on : .off
-        add(menu, "Frost auf Mitteilungen", #selector(toggleFrost)).state = frostEnabled ? .on : .off
+        add(menu, "Snowplow", #selector(togglePlow)).state = plow ? .on : .off
+        add(menu, "Frost on Notifications", #selector(toggleFrost)).state = frostEnabled ? .on : .off
         menu.addItem(.separator())
-        add(menu, "Weihnachtsmodus", #selector(toggleChristmas)).state = christmas ? .on : .off
+        add(menu, "Christmas Mode", #selector(toggleChristmas)).state = christmas ? .on : .off
         if christmas {
-            add(menu, "Winterdorf mit Adventskalender", #selector(toggleVillage)).state = village ? .on : .off
+            add(menu, "Winter Village with Advent Calendar", #selector(toggleVillage)).state = village ? .on : .off
             if village, let snow = overlays.first?.snow {
                 menu.addItem(NSMenuItem(title: snow.adventStatus, action: nil, keyEquivalent: ""))
             }
-            let pointerItem = NSMenuItem(title: "Weihnachtszeiger", action: nil, keyEquivalent: "")
+            let pointerItem = NSMenuItem(title: "Christmas Pointer", action: nil, keyEquivalent: "")
             pointerItem.submenu = pointerMenu()
             menu.addItem(pointerItem)
         }
         menu.addItem(.separator())
-        fightMenuItem=add(menu,"Schneeballschlacht starten",#selector(toggleSnowballFight))
-        let hint=NSMenuItem(title:"Dafür zwei Schneemänner aus je 3 Kugeln stapeln",action:nil,keyEquivalent:"")
+        fightMenuItem=add(menu,"Start Snowball Fight",#selector(toggleSnowballFight))
+        let hint=NSMenuItem(title:"First stack two snowmen of 3 snowballs each",action:nil,keyEquivalent:"")
         menu.addItem(hint);fightHint=hint
-        add(menu, "Schneemänner entfernen", #selector(clearSnowmen))
-        add(menu, "Schnee wegfegen", #selector(clearSnow))
+        add(menu, "Remove Snowmen", #selector(clearSnowmen))
+        add(menu, "Sweep Away Snow", #selector(clearSnow))
         menu.addItem(.separator())
-        add(menu, "Schneetag beenden", #selector(quit), key: "q")
+        add(menu, "Quit Snow Day", #selector(quit), key: "q")
         status?.menu = menu
         updateFightMenu()
-        pauseButton?.title = paused ? "Schnee fortsetzen" : "Schnee pausieren"
-        buildButton?.title = buildPanel == nil ? "Schneemann bauen" : "Bauen abbrechen"
+        pauseButton?.title = paused ? "Resume Snow" : "Pause Snow"
+        buildButton?.title = buildPanel == nil ? "Build Snowman" : "Cancel Building"
         plowButton?.state = plow ? .on : .off
         christmasButton?.state = christmas ? .on : .off
         frostButton?.state = frostEnabled ? .on : .off
@@ -3688,7 +3702,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
     private func updateFightMenu() {
         let running=overlays.contains { $0.snow.fight.isRunning }
         let count=overlays.map { $0.snow.fightEligibleCount }.max() ?? 0
-        fightMenuItem?.title=running ? "Schneeballschlacht beenden" : "Schneeballschlacht starten"
+        fightMenuItem?.title=running ? "End Snowball Fight" : "Start Snowball Fight"
         fightMenuItem?.isEnabled=running || count>=2
         fightHint?.isHidden=running || count>=2
     }
@@ -3712,25 +3726,25 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
         if controls == nil {
             let window = NSWindow(contentRect: CGRect(x: 0, y: 0, width: 410, height: 388),
                                   styleMask: [.titled, .closable], backing: .buffered, defer: false)
-            window.title = "Schneetag"
+            window.title = "Snow Day"
             window.isReleasedWhenClosed = false
             window.center()
             let icon = NSImageView(image: NSImage(systemSymbolName: "snowflake", accessibilityDescription: nil)!)
             icon.symbolConfiguration = .init(pointSize: 28, weight: .medium)
             icon.contentTintColor = .systemBlue
-            let intro = NSTextField(wrappingLabelWithString: "Schnee auf deinen Fenstern und ein kleiner Pflug am unteren Bildschirmrand.")
+            let intro = NSTextField(wrappingLabelWithString: "Snow on your windows and a little snowplow along the bottom of the screen.")
             intro.alignment = .center
 
             let picker = NSPopUpButton()
-            picker.addItems(withTitles: ["Leicht", "Normal", "Dicht"])
+            picker.addItems(withTitles: ["Light", "Normal", "Heavy"])
             picker.target = self
             picker.action = #selector(pickDensity(_:))
-            picker.setAccessibilityLabel("Schneefall")
+            picker.setAccessibilityLabel("Snowfall")
             densityPicker = picker
-            let snowRow = NSStackView(views: [NSTextField(labelWithString: "Schneefall"), picker])
+            let snowRow = NSStackView(views: [NSTextField(labelWithString: "Snowfall"), picker])
             snowRow.spacing = 10
 
-            let plowButton = NSButton(checkboxWithTitle: "Schneepflug", target: self, action: #selector(togglePlow))
+            let plowButton = NSButton(checkboxWithTitle: "Snowplow", target: self, action: #selector(togglePlow))
             self.plowButton = plowButton
             let plowRow = NSStackView(views: [plowButton])
             plowRow.spacing = 10
@@ -3739,36 +3753,36 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
             scarfPicker.addItems(withTitles: Scarf.allCases.map(\.title))
             scarfPicker.target = self
             scarfPicker.action = #selector(pickScarf(_:))
-            scarfPicker.setAccessibilityLabel("Schneemannschal")
+            scarfPicker.setAccessibilityLabel("Snowman Scarf")
             self.scarfPicker = scarfPicker
-            let scarfRow = NSStackView(views: [NSTextField(labelWithString: "Schneemannschal"), scarfPicker])
+            let scarfRow = NSStackView(views: [NSTextField(labelWithString: "Snowman Scarf"), scarfPicker])
             scarfRow.spacing = 10
-            let pause = NSButton(title: "Schnee pausieren", target: self, action: #selector(togglePause))
+            let pause = NSButton(title: "Pause Snow", target: self, action: #selector(togglePause))
             pause.bezelStyle = .rounded
             pauseButton = pause
             let actions = NSStackView(views: [pause])
             actions.spacing = 10
-            let hint = NSTextField(labelWithString: "Schnee schieben, Kugeln anklicken und stapeln.")
+            let hint = NSTextField(labelWithString: "Push snow around, click snowballs and stack them.")
             hint.textColor = .secondaryLabelColor
             hint.font = .systemFont(ofSize: 11)
 
-            let christmasButton = NSButton(checkboxWithTitle: "Weihnachtsmodus", target: self,
+            let christmasButton = NSButton(checkboxWithTitle: "Christmas Mode", target: self,
                                            action: #selector(toggleChristmas))
             self.christmasButton = christmasButton
             let christmasRow = NSStackView(views: [christmasButton])
             christmasRow.spacing = 10
-            let frostButton = NSButton(checkboxWithTitle: "Frost auf Mitteilungen", target: self,
+            let frostButton = NSButton(checkboxWithTitle: "Frost on Notifications", target: self,
                                        action: #selector(toggleFrost))
             self.frostButton = frostButton
-            let preview = NSButton(title: "Frostvorschau", target: self, action: #selector(showFrostPreview))
+            let preview = NSButton(title: "Frost Preview", target: self, action: #selector(showFrostPreview))
             preview.bezelStyle = .rounded
             let frostRow = NSStackView(views: [frostButton, preview])
             frostRow.spacing = 10
             var rows: [NSView] = [icon, intro, snowRow, plowRow, scarfRow, christmasRow, frostRow, actions, hint]
             if !AXIsProcessTrusted() {
-                // Lets Schneetag see where desktop icons lie, so a snowball
+                // Lets Snow Day see where desktop icons lie, so a snowball
                 // or a door never sits in the way of clicking one.
-                let icons = NSButton(title: "Desktop-Symbole schützen …", target: self, action: #selector(allowDesktopIcons))
+                let icons = NSButton(title: "Protect Desktop Icons…", target: self, action: #selector(allowDesktopIcons))
                 icons.bezelStyle = .rounded
                 icons.controlSize = .small
                 rows.append(icons)
@@ -3827,14 +3841,14 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
 
     /// Test mode pretends it is a given day in December, in a calendar of its
     /// own, so every door can be tried without touching the real one.
-    // Door test mode: only in builds made with SCHNEETAG_DEV=1 ./build.sh,
+    // Door test mode: only in builds made with SNOWDAY_DEV=1 ./build.sh,
     // never in the app people download.
-    #if SCHNEETAG_DEV
+    #if SNOWDAY_DEV
     var adventTestDay: Int?
     var adventTestHour: Int?
     /// Test mode with every door clickable at once, not one per day.
     var adventTestAll = false
-    private let adventTestDefaults = UserDefaults(suiteName: "local.schneetag.mac.adventtest")!
+    private let adventTestDefaults = UserDefaults(suiteName: "io.github.saschamartins1995.snowday.adventtest")!
 
     private var adventTestYear: Int {
         let parts = Calendar(identifier: .gregorian).dateComponents([.year], from: Date())
@@ -3921,36 +3935,36 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
 
     private func adventTestMenu() -> NSMenu {
         let menu = NSMenu()
-        let info = NSMenuItem(title: adventTestAll ? "Test: alle Türchen anklickbar – dein echter Kalender bleibt unberührt"
-                                : adventTestDay.map { "Test: \($0). Dezember – dein echter Kalender bleibt unberührt" }
-                                ?? "Einen Tag wählen, sein Türchen im Dorf anklicken",
+        let info = NSMenuItem(title: adventTestAll ? "Test: every door clickable – your real calendar stays untouched"
+                                : adventTestDay.map { "Test: December \($0) – your real calendar stays untouched" }
+                                ?? "Pick a day, then click its door in the village",
                               action: nil, keyEquivalent: "")
         menu.addItem(info)
         menu.addItem(.separator())
         let days = NSMenu()
         for day in 1...24 {
-            let title = "\(day). Dezember – \(AdventGift.forDay(day).title)"
+            let title = "December \(day) – \(AdventGift.forDay(day).title)"
             let item = add(days, title, #selector(chooseTestDay(_:)))
             item.tag = day
             item.state = adventTestDay == day ? .on : .off
         }
-        let dayItem = NSMenuItem(title: "Tag wählen", action: nil, keyEquivalent: "")
+        let dayItem = NSMenuItem(title: "Choose Day", action: nil, keyEquivalent: "")
         dayItem.submenu = days
         menu.addItem(dayItem)
-        let open = add(menu, "Heutiges Türchen öffnen", #selector(openTestDoor))
+        let open = add(menu, "Open Today's Door", #selector(openTestDoor))
         open.isEnabled = adventTestDay != nil
-        let next = add(menu, "Nächster Tag", #selector(nextTestDay))
+        let next = add(menu, "Next Day", #selector(nextTestDay))
         next.isEnabled = (adventTestDay ?? 24) < 24
         menu.addItem(.separator())
-        for (title, hour) in [("Echte Uhrzeit", -1), ("Morgen, 8 Uhr", 8), ("Mittag, 13 Uhr", 13),
-                              ("Abend, 18 Uhr", 18), ("Nacht, 22 Uhr", 22)] {
+        for (title, hour) in [("Real Time", -1), ("Morning, 8 am", 8), ("Midday, 1 pm", 13),
+                              ("Evening, 6 pm", 18), ("Night, 10 pm", 22)] {
             let item = add(menu, title, #selector(chooseTestHour(_:)))
             item.tag = hour
             item.state = (adventTestHour ?? -1) == hour ? .on : .off
             item.isEnabled = adventTestDay != nil
         }
         menu.addItem(.separator())
-        let end = add(menu, "Testmodus beenden", #selector(endAdventTest))
+        let end = add(menu, "End Test Mode", #selector(endAdventTest))
         end.isEnabled = adventTestDay != nil
         return menu
     }
@@ -4015,7 +4029,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
             let size = CGSize(width: 362, height: 132)
             let window = NSWindow(contentRect: CGRect(origin: .zero, size: size),
                                   styleMask: [.titled, .closable], backing: .buffered, defer: false)
-            window.title = "Frostvorschau"
+            window.title = "Frost Preview"
             window.delegate = self
             window.isReleasedWhenClosed = false
             let frost = FrostView(frame: CGRect(origin: .zero, size: size))
@@ -4027,9 +4041,9 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
             card.wantsLayer = true
             card.layer?.cornerRadius = 16
             card.layer?.masksToBounds = true
-            let title = NSTextField(labelWithString: "Ein Wintergruß")
+            let title = NSTextField(labelWithString: "Winter greetings")
             title.font = .systemFont(ofSize: 15, weight: .semibold)
-            let subtitle = NSTextField(labelWithString: "Beim Schließen fällt der Frost herunter.")
+            let subtitle = NSTextField(labelWithString: "The frost falls off when you close it.")
             subtitle.textColor = .secondaryLabelColor
             title.frame = CGRect(x: 20, y: 55, width: 280, height: 22)
             subtitle.frame = CGRect(x: 20, y: 34, width: 280, height: 18)
@@ -4101,7 +4115,7 @@ final class Winter: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDel
         strip.snow = layer.snow
         strip.festiveCursor = christmas
         strip.cancel = { [weak self] in self?.endBuild() }
-        let cancel = NSButton(title: "Abbrechen", target: self, action: #selector(cancelBuild))
+        let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancelBuild))
         cancel.bezelStyle = .rounded
         cancel.translatesAutoresizingMaskIntoConstraints = false
         strip.addSubview(cancel)

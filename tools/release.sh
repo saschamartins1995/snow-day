@@ -1,22 +1,24 @@
 #!/bin/bash
-# Builds, signs and notarizes a release: build/Schneetag.zip, ready to upload.
+# Builds, signs and notarizes a release: build/SnowDay.zip, ready to upload.
 #
 # Needs a "Developer ID Application" certificate in the keychain and stored
 # notary credentials, created once with:
-#   xcrun notarytool store-credentials schneetag --apple-id <Apple ID> --team-id <Team ID>
+#   xcrun notarytool store-credentials snowday --apple-id <Apple ID> --team-id <Team ID>
 #
 # Usage: SIGN_IDENTITY="Developer ID Application: Name (TEAMID)" tools/release.sh
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
-profile="${NOTARY_PROFILE:-schneetag}"
+profile="${NOTARY_PROFILE:-snowday}"
+app="$root/build/Snow Day.app"
+zip="$root/build/SnowDay.zip"
 : "${SIGN_IDENTITY:?Set SIGN_IDENTITY to your Developer ID Application identity}"
-rm -rf "$root/build/Schneetag.app" "$root/build/Schneetag.zip"
-UNIVERSAL=1 SIGN_IDENTITY="$SIGN_IDENTITY" "$root/build.sh" "$root/build/Schneetag.app"
-codesign --verify --deep --strict "$root/build/Schneetag.app"
-ditto -c -k --keepParent "$root/build/Schneetag.app" "$root/build/Schneetag.zip"
-xcrun notarytool submit "$root/build/Schneetag.zip" --keychain-profile "$profile" --wait
-xcrun stapler staple "$root/build/Schneetag.app"
-rm "$root/build/Schneetag.zip"
-ditto -c -k --keepParent "$root/build/Schneetag.app" "$root/build/Schneetag.zip"
-spctl --assess --type execute --verbose "$root/build/Schneetag.app"
-echo "Ready: $root/build/Schneetag.zip"
+rm -rf "$app" "$zip"
+UNIVERSAL=1 SIGN_IDENTITY="$SIGN_IDENTITY" "$root/build.sh" "$app"
+codesign --verify --deep --strict "$app"
+ditto -c -k --norsrc --noextattr --keepParent "$app" "$zip"
+xcrun notarytool submit "$zip" --keychain-profile "$profile" --wait
+xcrun stapler staple "$app"
+rm "$zip"
+ditto -c -k --norsrc --noextattr --keepParent "$app" "$zip"
+spctl --assess --type execute --verbose "$app"
+echo "Ready: $zip"

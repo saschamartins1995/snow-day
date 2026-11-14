@@ -3,27 +3,27 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Schneetag</string>
+	<string>Snow Day</string>
 	<key>CFBundleExecutable</key>
-	<string>Schneetag</string>
+	<string>SnowDay</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>local.schneetag.mac</string>
+	<string>io.github.saschamartins1995.snowday</string>
 	<key>CFBundleName</key>
-	<string>Schneetag</string>
+	<string>Snow Day</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.85</string>
+	<string>2.86</string>
 	<key>CFBundleVersion</key>
-	<string>187</string>
+	<string>188</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>Open Source unter der MIT-Lizenz</string>
+	<string>Open source under the MIT License</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>

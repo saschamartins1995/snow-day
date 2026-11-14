@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 source_dir="$(cd "$(dirname "$0")/.." && pwd)"
-test_dir="$(mktemp -d "${TMPDIR:-/tmp}/schneetag-checks.XXXXXX")"
+test_dir="$(mktemp -d "${TMPDIR:-/tmp}/snowday-checks.XXXXXX")"
 trap 'rm -rf "$test_dir"' EXIT
 export SNOW_TEST_OUTPUT="$test_dir"
 python3 - "$source_dir" "$test_dir" <<'PY'
